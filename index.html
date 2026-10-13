@@ -2988,128 +2988,25 @@ widespread:"แพร่หลาย",
 
 };
 
-/*
-   Dictionary lookup: FreeDictionaryAPI.com (data sourced from Wiktionary).
-   We only accept Thai translations already present in dictionary entries.
-   No machine-translation fallback is used.
-*/
-const DICTIONARY_API = "https://freedictionaryapi.com/api/v1/entries/en/";
-const translationCacheKey = "SWG_dictionary_translations_v3";
-let translationCache = {};
-
-try {
-    const cached = JSON.parse(localStorage.getItem(translationCacheKey) || "{}");
-    if (cached && typeof cached === "object" && !Array.isArray(cached)) {
-        translationCache = cached;
-    }
-} catch (error) {
-    translationCache = {};
-    console.warn("Could not read cached dictionary entries.", error);
-}
-
-function isThaiTranslation(value) {
-    return typeof value === "string" &&
-        /\p{Script=Thai}/u.test(value) &&
-        value.length <= 120;
-}
-
-function collectThaiDictionaryTranslations(senses, found) {
-    if (!Array.isArray(senses)) return;
-    for (const sense of senses) {
-        for (const item of (Array.isArray(sense.translations) ? sense.translations : [])) {
-            const langCode = String(item?.language?.code || "").toLowerCase();
-            const translation = String(item?.word || "").trim();
-            if ((langCode === "th" || langCode === "tha") && isThaiTranslation(translation)) {
-                found.push(translation);
-            }
-        }
-        collectThaiDictionaryTranslations(sense.subsenses, found);
-    }
-}
-
-async function fetchTranslation(english) {
-    const key = String(english || "").trim().toLowerCase();
-    if (!key) throw new Error("Missing dictionary headword.");
-
-    const cached = translationCache[key];
-    if (isThaiTranslation(cached?.thai)) return cached.thai;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 9000);
-    try {
-        const url = DICTIONARY_API + encodeURIComponent(key) + "?translations=true";
-        const response = await fetch(url, { signal: controller.signal });
-        if (!response.ok) throw new Error("Dictionary lookup failed: " + response.status);
-
-        const result = await response.json();
-        const entries = Array.isArray(result?.entries) ? result.entries : [];
-        const translations = [];
-
-        for (const entry of entries) {
-            const languageCode = String(entry?.language?.code || "").toLowerCase();
-            if (languageCode !== "en" && languageCode !== "eng") continue;
-            collectThaiDictionaryTranslations(entry.senses, translations);
-        }
-
-        // Dictionary senses are generally ordered from the most common meaning first.
-        // Show only one Thai translation to keep the game's vocabulary clear.
-        const unique = [...new Set(translations)];
-        if (!unique.length) throw new Error("No Thai dictionary translation found for: " + key);
-
-        const thai = unique[0];
-        translationCache[key] = {
-            thai,
-            source: result?.source?.url || "https://en.wiktionary.org/wiki/" + encodeURIComponent(key),
-            fetchedAt: Date.now()
-        };
-        try {
-            localStorage.setItem(translationCacheKey, JSON.stringify(translationCache));
-        } catch (error) {
-            console.warn("Could not cache dictionary translation.", error);
-        }
-        return thai;
-    } finally {
-        clearTimeout(timeout);
-    }
-}
-
+/* =========================================================
+   THAI TRANSLATIONS — curated local dictionary only
+   Gameplay must always use offlineTranslations above.
+   No API or localStorage cache may overwrite these meanings.
+========================================================= */
 function updateWordTranslation(word) {
-    // The curated offline translation is the source of truth for gameplay.
-    // This intentionally does not call an external dictionary API, so the
-    // Thai prompt cannot flicker or change meaning while the player is looking.
     if (word && currentWord === word) {
-        thaiWordEl.textContent = word.thai || "";
+        const key = String(word.english || "").trim().toLowerCase();
+        const savedMeaning = offlineTranslations[key] || word.thai || "";
+        word.thai = savedMeaning;
+        thaiWordEl.textContent = savedMeaning;
     }
 }
 
 function getMasterVocabulary(){
-    // Use a curated, everyday vocabulary pool so obscure academic words do not appear.
+    // Use the curated vocabulary pool for gameplay.
     return Object.keys(offlineTranslations).filter(word =>
         easyVocabulary.has(word) || normalVocabulary.has(word) || hardVocabulary.has(word)
     );
-}
-
-/* =========================================================
-   VOCABULARY LEVELS — everyday English for general Thai students.
-   Easy = very familiar words; Normal = common school/life words;
-   Hard = a little more challenging, but not university-level jargon.
-========================================================= */
-const easyVocabulary = new Set((`
-apple bad bag banana beach bear because bed big bird black blue boat book bottle boy bread brother bus buy cake car cat chair chicken city class clean clock close cloud come cow cup dance day deer desk doctor dog door drink duck ear eat egg evening eye family farmer father fish flower food foot friend frog get girl give go goat good goodbye grape grass green hair hand happy head hello help here home horse hot house jump keep laugh lemon like lion listen live long look love make mango market meat melon milk monkey moon morning mouth need new night nose old one open orange panda park pay pen phone pig plate play please police put rabbit rain read rice river road room run school see sell shark sheep shirt shoes short sing sister sit sleep small smile snake snow soup speak spoon star start stop student study sun swim take tall teacher thank there tiger today tomorrow tree under wake walk wash water whale white wind window without work write yellow young
-`).trim().split(/\s+/));
-
-const normalVocabulary = new Set((`
-about above across after again against almost along already also always another answer around arrive ask aunt baby beautiful before begin believe between body bottle breakfast bring busy call carry change check child choose city class clean clear clever clothes coffee computer country dance decide different difficult dinner early easy enough every everyone everything example explain face fall famous fast feel finish forget free fresh full game garden history kitchen language learn leave letter library listen little live local lucky many map message minute money move much music name near never next nice often once outside parent party people place poor popular possible practice present price problem question quick quiet quite ready really reason remember reply right same school science second show sick simple since sing sister small sometimes speak stay strong sure swim talk team thing think thirsty together town travel tree try turn understand until visit wait wake warm watch weather week welcome well west white whole window winter woman world year yellow
-`).trim().split(/\s+/));
-
-const hardVocabulary = new Set((`
-advice agree allow appear article attention avoid basic become borrow careful cause celebrate certain chance character common compare complete condition continue control describe design discover discuss effect effort energy enjoy especially event expect fact fair foreign form future habit happen health important improve include increase information interest introduce invent invite island issue journey knowledge manage material measure memory mention modern nature necessary notice opinion ordinary organize patient perform prepare prevent protect provide public receive reduce report result return serious several similar social special suggest supply support though thought trouble useful usual village waste worry
-`).trim().split(/\s+/));
-
-function getVocabularyLevel(word){
-    if(easyVocabulary.has(word)) return "easy";
-    if(hardVocabulary.has(word)) return "hard";
-    return "normal";
 }
 
 /* =========================================================
@@ -4613,11 +4510,11 @@ function newWord(){
 
     index=0;
 
-    thaiWordEl.textContent=
-        currentWord.thai;
+    currentWord.thai = offlineTranslations[String(currentWord.english || "").toLowerCase()] || currentWord.thai || "";
 
-    messageEl.textContent=
-        "Find the first letter";
+    thaiWordEl.textContent = currentWord.thai;
+
+    messageEl.textContent = "Find the first letter";
 
     // Use the saved Thai meaning only. Do not replace it asynchronously
     // with a dictionary API result, which may show a different sense later.
