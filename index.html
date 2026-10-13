@@ -1,0 +1,6310 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<title>Sweet Word Garden</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#243224;
+}
+
+body{
+    font-family:"Courier New",monospace;
+}
+
+button,input{
+    font-family:inherit;
+}
+
+button{
+    -webkit-tap-highlight-color:transparent;
+}
+
+.hidden{
+    display:none!important;
+}
+
+#game{
+    position:relative;
+    width:100vw;
+    height:100vh;
+    overflow:hidden;
+}
+
+canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+}
+
+/* =========================================================
+   GENERAL PANELS
+========================================================= */
+
+.panel{
+    background:#fff0c9;
+    border:4px solid #513b31;
+    box-shadow:
+        inset 0 0 0 3px #d39b62,
+        4px 4px 0 rgba(40,30,25,.28);
+}
+
+/* =========================================================
+   HUD
+========================================================= */
+
+#hud{
+    position:absolute;
+    z-index:20;
+    top:14px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:7px;
+    pointer-events:none;
+}
+
+.sideHud{
+    width:116px;
+    min-height:68px;
+    padding:7px;
+    text-align:center;
+}
+
+.label{
+    color:#795843;
+    font-size:9px;
+    font-weight:bold;
+    letter-spacing:1px;
+}
+
+#life{
+    display:flex;
+    justify-content:center;
+    gap:4px;
+    margin-top:35px;
+    transform:translateX(-10px);
+}
+
+.heart{
+    width:20px;
+    height:16px;
+    position:relative;
+}
+
+.heart span{
+    position:absolute;
+    width:4px;
+    height:4px;
+    background:#dc4d59;
+    box-shadow:
+        4px 0 #dc4d59,
+        12px 0 #dc4d59,
+        16px 0 #dc4d59,
+        0 4px #dc4d59,
+        4px 4px #f16b74,
+        8px 4px #dc4d59,
+        12px 4px #f16b74,
+        16px 4px #dc4d59,
+        4px 8px #dc4d59,
+        8px 8px #dc4d59,
+        12px 8px #dc4d59,
+        8px 12px #dc4d59;
+}
+
+#wordPanel{
+    width:340px;
+    min-height:96px;
+    padding:8px 15px;
+    text-align:center;
+}
+
+#thaiWord{
+    color:#70483b;
+    font-family:Tahoma,sans-serif;
+    font-size:23px;
+    font-weight:bold;
+    margin-top:2px;
+}
+
+#answer{
+    min-height:20px;
+    margin-top:3px;
+    color:#3f4938;
+    font-size:15px;
+    font-weight:bold;
+    letter-spacing:4px;
+}
+
+#progress{
+    width:100%;
+    height:8px;
+    padding:2px;
+    margin-top:6px;
+    background:#60473a;
+}
+
+#progressFill{
+    height:100%;
+    width:0;
+    background:#78a84f;
+}
+
+#message{
+    margin-top:4px;
+    min-height:12px;
+    font-family:Tahoma,sans-serif;
+    font-size:9px;
+    color:#92715a;
+}
+
+#score{
+    color:#b8653e;
+    font-size:21px;
+    font-weight:bold;
+    margin-top:4px;
+}
+
+#modeText{
+    margin-top:2px;
+    color:#68804e;
+    font-size:8px;
+    font-weight:bold;
+}
+
+#wordCount{
+    margin-top:3px;
+    color:#8d6750;
+    font-size:8px;
+}
+
+/* =========================================================
+   MENU BUTTON
+========================================================= */
+
+#menuBtn,
+#helpBtn{
+    position:absolute;
+    z-index:30;
+    width:44px;
+    height:42px;
+    border:4px solid #513b31;
+    background:#efd095;
+    box-shadow:4px 4px 0 rgba(40,30,25,.3);
+    color:#513b31;
+    font-size:19px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+#menuBtn{
+    right:17px;
+    top:16px;
+}
+
+#helpBtn{
+    right:68px;
+    top:16px;
+}
+
+#menuBtn:active,
+#helpBtn:active{
+    transform:translate(3px,3px);
+    box-shadow:1px 1px 0 rgba(40,30,25,.3);
+}
+
+#touchControls{display:none!important;}
+
+#canvas{touch-action:none;}
+#game{touch-action:none;}
+#mobileJoystick{
+    position:absolute;
+    z-index:28;
+    width:92px;height:92px;
+    margin-left:-46px;margin-top:-46px;
+    border:2px solid rgba(255,255,255,.42);
+    border-radius:50%;
+    background:rgba(255,255,255,.08);
+    box-shadow:inset 0 0 0 2px rgba(81,59,49,.16);
+    pointer-events:none;
+    display:none;
+}
+#mobileJoystick .stick{
+    position:absolute;
+    left:50%;top:50%;
+    width:38px;height:38px;
+    margin:-19px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,.62);
+    background:rgba(255,255,255,.20);
+}
+
+/* =========================================================
+   POWER BADGES
+========================================================= */
+
+#powerBar{
+    position:absolute;
+    z-index:25;
+    left:18px;
+    top:17px;
+    display:flex;
+    gap:6px;
+}
+
+.powerBadge{
+    display:none;
+    padding:7px 9px;
+    background:#fff0c9;
+    border:3px solid #513b31;
+    color:#674a3d;
+    font-size:9px;
+    font-weight:bold;
+}
+
+/* =========================================================
+   OVERLAYS
+========================================================= */
+
+.overlay{
+    position:absolute;
+    z-index:100;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:rgba(31,47,35,.6);
+    backdrop-filter:blur(2px);
+}
+
+.card{
+    width:430px;
+    padding:33px 36px;
+    text-align:center;
+    background:#f6ddb0;
+    border:6px solid #513b31;
+    box-shadow:
+        inset 0 0 0 5px #c88750,
+        inset 0 0 0 9px #f9e7bf,
+        9px 9px 0 rgba(35,27,23,.35);
+}
+
+/* =========================================================
+   HOME
+========================================================= */
+
+.logoSmall{
+    color:#6f9e4f;
+    font-size:15px;
+    font-weight:bold;
+    letter-spacing:3px;
+}
+
+.title{
+    margin-top:8px;
+    color:#704736;
+    font-size:35px;
+    font-weight:bold;
+    line-height:1;
+    text-shadow:3px 3px #e9b875;
+}
+
+.title span{
+    display:block;
+    margin-top:8px;
+    color:#b95e55;
+    font-size:28px;
+}
+
+.subtitle{
+    margin:15px 0 23px;
+    color:#8e654a;
+    font-size:9px;
+    font-weight:bold;
+    letter-spacing:3px;
+}
+
+.pixelBtn{
+    width:100%;
+    min-height:49px;
+    margin-top:11px;
+    padding:8px;
+    border:4px solid #513b31;
+    background:#e8c382;
+    box-shadow:
+        inset 0 0 0 3px #ffe4ad,
+        4px 4px 0 #513b31;
+    color:#513b31;
+    font-size:12px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.pixelBtn:hover{
+    filter:brightness(1.05);
+}
+
+.pixelBtn:active{
+    transform:translate(4px,4px);
+    box-shadow:inset 0 0 0 3px #ffe4ad;
+}
+
+.primary{
+    background:#92bd64;
+}
+
+.best{
+    margin-top:22px;
+    padding-top:14px;
+    border-top:3px dashed #bd8b61;
+    color:#76513e;
+    font-size:10px;
+}
+
+.best b{
+    color:#bd5d45;
+    font-size:17px;
+}
+
+/* =========================================================
+   DIFFICULTY
+========================================================= */
+
+#difficultyCard{
+    width:590px;
+}
+
+#difficultyCard h2{
+    color:#704736;
+    font-size:23px;
+}
+
+#difficultyCard>p{
+    margin-top:7px;
+    font-family:Tahoma,sans-serif;
+    color:#89634c;
+    font-size:11px;
+}
+
+.difficultyGrid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-top:22px;
+}
+
+.diff{
+    min-height:185px;
+    border:4px solid #513b31;
+    box-shadow:4px 4px 0 #513b31;
+    padding:15px 8px;
+    color:#513b31;
+    cursor:pointer;
+}
+
+.diff:active{
+    transform:translate(4px,4px);
+    box-shadow:none;
+}
+
+.diff.easy{
+    background:#b9dc8b;
+}
+
+.diff.normal{
+    background:#f0cc7e;
+}
+
+.diff.hard{
+    background:#e9957f;
+}
+
+.diffPixel{
+    width:72px;
+    height:72px;
+    margin:0 auto 13px;
+    display:block;
+    position:relative;
+}
+
+/* Pixel leaf */
+.pixelLeaf{
+    position:absolute;
+    left:25px;
+    top:19px;
+    width:22px;
+    height:29px;
+    background:#4e873e;
+    box-shadow:
+        -8px 6px 0 #68a84e,
+        8px -7px 0 #78b85b,
+        0 8px 0 #78b85b;
+    transform:rotate(-35deg);
+}
+
+.pixelLeaf:after{
+    content:"";
+    position:absolute;
+    width:4px;
+    height:31px;
+    background:#76543a;
+    left:10px;
+    top:22px;
+    transform:rotate(35deg);
+}
+
+/* Pixel flower */
+.pixelFlower{
+    position:absolute;
+    left:25px;
+    top:25px;
+    width:18px;
+    height:18px;
+    background:#ef7789;
+    box-shadow:
+        -12px 0 #f3a1ae,
+        12px 0 #f3a1ae,
+        0 -12px #f3a1ae,
+        0 12px #f3a1ae;
+}
+
+.pixelFlower:after{
+    content:"";
+    position:absolute;
+    left:6px;
+    top:6px;
+    width:7px;
+    height:7px;
+    background:#efc957;
+}
+
+/* Pixel flame */
+.pixelFlame{
+    position:absolute;
+    left:27px;
+    top:12px;
+    width:18px;
+    height:45px;
+    background:#e34f45;
+    box-shadow:
+        -9px 14px 0 #ef7651,
+        9px 18px 0 #ef7651;
+}
+
+.pixelFlame:before{
+    content:"";
+    position:absolute;
+    left:5px;
+    top:13px;
+    width:9px;
+    height:28px;
+    background:#ffd267;
+}
+
+.pixelFlame:after{
+    content:"";
+    position:absolute;
+    left:8px;
+    top:25px;
+    width:6px;
+    height:16px;
+    background:#fff0a2;
+}
+
+.diff strong{
+    display:block;
+    font-size:14px;
+}
+
+.diffBest{
+    display:block;
+    margin-top:13px;
+    font-size:8px;
+}
+
+/* =========================================================
+   SETTINGS
+========================================================= */
+
+.setting{
+    margin-top:15px;
+    padding:14px;
+    background:#ffe9bb;
+    border:4px solid #795540;
+    text-align:left;
+}
+
+.settingHead{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:10px;
+    color:#624636;
+    font-size:10px;
+    font-weight:bold;
+}
+
+input[type=range]{
+    width:100%;
+}
+
+/* =========================================================
+   GAME OVER / PAUSE
+========================================================= */
+
+#finalScore{
+    margin:10px 0;
+    color:#b95e45;
+    font-size:47px;
+    font-weight:bold;
+}
+
+.stats{
+    margin:14px 0;
+    padding:12px;
+    background:#ffe9bb;
+    border:3px solid #795540;
+    color:#76513e;
+    font-size:10px;
+    line-height:2;
+}
+
+/* =========================================================
+   FLOAT TEXT
+========================================================= */
+
+.floatText{
+    position:absolute;
+    z-index:60;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:14px;
+    font-weight:bold;
+    text-shadow:
+        2px 0 #49372f,
+        -2px 0 #49372f,
+        0 2px #49372f,
+        0 -2px #49372f;
+    pointer-events:none;
+    animation:floatText .8s steps(6) forwards;
+}
+
+@keyframes floatText{
+    0%{
+        opacity:0;
+        transform:translate(-50%,0) scale(.7);
+    }
+    20%{
+        opacity:1;
+        transform:translate(-50%,-20%) scale(1.1);
+    }
+    100%{
+        opacity:0;
+        transform:translate(-50%,-120%);
+    }
+}
+
+#completeText{
+    position:absolute;
+    z-index:60;
+    left:50%;
+    top:45%;
+    transform:translate(-50%,-50%);
+    opacity:0;
+    color:#fff0a4;
+    font-size:30px;
+    font-weight:bold;
+    text-shadow:
+        4px 0 #704b38,
+        -4px 0 #704b38,
+        0 4px #704b38,
+        0 -4px #704b38;
+    pointer-events:none;
+}
+
+#completeText.show{
+    animation:complete .8s steps(7);
+}
+
+@keyframes complete{
+    0%{
+        opacity:0;
+        transform:translate(-50%,-50%) scale(.4);
+    }
+    30%{
+        opacity:1;
+        transform:translate(-50%,-50%) scale(1.2);
+    }
+    65%{
+        opacity:1;
+        transform:translate(-50%,-50%) scale(1);
+    }
+    100%{
+        opacity:0;
+        transform:translate(-50%,-80%);
+    }
+}
+
+/* =========================================================
+   TUTORIAL
+========================================================= */
+
+#tutorialOverlay{
+    z-index:200;
+    background:rgba(31,47,35,.76);
+}
+
+.tutorialCard{
+    width:620px;
+    max-width:92vw;
+    min-height:440px;
+    padding:27px 30px 23px;
+    text-align:center;
+    background:#f6ddb0;
+    border:6px solid #513b31;
+    box-shadow:
+        inset 0 0 0 5px #c88750,
+        inset 0 0 0 9px #f9e7bf,
+        10px 10px 0 rgba(35,27,23,.4);
+}
+
+.tutorialTop{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    color:#795540;
+    font-size:9px;
+    font-weight:bold;
+}
+
+.tutorialTitle{
+    margin-top:7px;
+    color:#704736;
+    font-size:25px;
+    text-shadow:2px 2px #e9b875;
+}
+
+.tutorialScene{
+    position:relative;
+    width:100%;
+    height:210px;
+    margin-top:18px;
+    overflow:hidden;
+    background:#7db15b;
+    border:4px solid #513b31;
+    box-shadow:inset 0 0 0 3px #a7ce72;
+}
+
+.tutorialScene:before{
+    content:"";
+    position:absolute;
+    inset:0;
+    opacity:.22;
+    background-image:
+        radial-gradient(#4d8148 1px,transparent 1px);
+    background-size:17px 17px;
+}
+
+/* tutorial pixel player */
+
+.tPlayer{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:48px;
+    height:64px;
+    transform:translate(-50%,-50%);
+}
+
+.tPlayer .head{
+    position:absolute;
+    left:9px;
+    top:4px;
+    width:30px;
+    height:27px;
+    background:#f1bd96;
+    border:4px solid #5b4035;
+}
+
+.tPlayer .hair{
+    position:absolute;
+    left:5px;
+    top:1px;
+    width:38px;
+    height:15px;
+    background:#68483a;
+    z-index:2;
+}
+
+.tPlayer .body{
+    position:absolute;
+    left:8px;
+    top:31px;
+    width:32px;
+    height:24px;
+    background:#6d86bb;
+    border:4px solid #554f58;
+}
+
+.tPlayer .leg1,
+.tPlayer .leg2{
+    position:absolute;
+    top:52px;
+    width:8px;
+    height:13px;
+    background:#554f58;
+}
+
+.tPlayer .leg1{
+    left:11px;
+}
+
+.tPlayer .leg2{
+    right:11px;
+}
+
+.tPlayer .eye1,
+.tPlayer .eye2{
+    position:absolute;
+    top:17px;
+    width:4px;
+    height:4px;
+    background:#493b38;
+    z-index:3;
+}
+
+.tPlayer .eye1{
+    left:17px;
+}
+
+.tPlayer .eye2{
+    left:28px;
+}
+
+/* tutorial letter */
+
+.tLetter{
+    position:absolute;
+    width:50px;
+    height:43px;
+    background:#dfa35e;
+    border:4px solid #704832;
+    box-shadow:
+        inset 0 0 0 3px #b97743,
+        4px 4px 0 rgba(40,30,25,.25);
+}
+
+.tLetter span{
+    display:block;
+    color:#fff6cf;
+    font-size:25px;
+    line-height:35px;
+    font-weight:bold;
+    text-shadow:2px 2px #4b342c;
+}
+
+.tLetter.a{
+    left:18%;
+    top:29%;
+}
+
+.tLetter.b{
+    right:18%;
+    top:51%;
+}
+
+.tLetter.c{
+    left:39%;
+    top:12%;
+}
+
+.tArrow{
+    position:absolute;
+    left:50%;
+    top:27%;
+    color:#fff4b5;
+    font-size:28px;
+    font-weight:bold;
+    text-shadow:
+        3px 0 #513b31,
+        -3px 0 #513b31,
+        0 3px #513b31,
+        0 -3px #513b31;
+    animation:tArrow 1s steps(3) infinite;
+}
+
+@keyframes tArrow{
+    0%,100%{
+        transform:translate(-50%,0);
+    }
+    50%{
+        transform:translate(-50%,-7px);
+    }
+}
+
+/* tutorial bug */
+
+.tBug{
+    position:absolute;
+    right:17%;
+    top:22%;
+    width:58px;
+    height:45px;
+}
+
+.tBug .body{
+    position:absolute;
+    left:13px;
+    top:7px;
+    width:31px;
+    height:25px;
+    background:#d84e59;
+    border:4px solid #493837;
+}
+
+.tBug .stripe{
+    position:absolute;
+    left:27px;
+    top:8px;
+    width:4px;
+    height:23px;
+    background:#6b3439;
+    z-index:2;
+}
+
+.tBug .leg{
+    position:absolute;
+    width:17px;
+    height:4px;
+    background:#493837;
+}
+
+.tBug .l1{
+    left:0;
+    top:13px;
+}
+
+.tBug .l2{
+    left:0;
+    top:27px;
+}
+
+.tBug .r1{
+    right:0;
+    top:13px;
+}
+
+.tBug .r2{
+    right:0;
+    top:27px;
+}
+
+.tBug .head{
+    position:absolute;
+    left:20px;
+    top:0;
+    width:19px;
+    height:10px;
+    background:#493837;
+}
+
+.tBug .eye{
+    position:absolute;
+    top:2px;
+    width:4px;
+    height:4px;
+    background:#fff1bb;
+    z-index:3;
+}
+
+.tBug .e1{
+    left:24px;
+}
+
+.tBug .e2{
+    left:33px;
+}
+
+.tHeart{
+    position:absolute;
+    left:50%;
+    top:53%;
+    width:28px;
+    height:25px;
+    transform:translate(-50%,-50%);
+}
+
+.tHeart:before,
+.tHeart:after{
+    content:"";
+    position:absolute;
+    width:13px;
+    height:13px;
+    background:#dc4d59;
+    top:0;
+}
+
+.tHeart:before{
+    left:1px;
+}
+
+.tHeart:after{
+    right:1px;
+}
+
+.tHeartCenter{
+    position:absolute;
+    left:4px;
+    top:7px;
+    width:20px;
+    height:15px;
+    background:#dc4d59;
+    transform:rotate(45deg);
+}
+
+.tPowerups{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:space-evenly;
+    gap:6px;
+    padding:8px;
+}
+
+.tPowerCard{
+    width:30%;
+    padding:11px 4px;
+    background:#fff0c9;
+    border:3px solid #513b31;
+    color:#513b31;
+    text-align:center;
+    font-size:11px;
+    font-weight:bold;
+    box-shadow:3px 3px 0 rgba(40,30,25,.28);
+}
+
+.tPowerIcon{
+    margin-bottom:7px;
+    font-size:25px;
+}
+
+/* tutorial word panel */
+.tWordPanel{
+    position:absolute;
+    left:50%;
+    bottom:15px;
+    transform:translateX(-50%);
+    width:230px;
+    padding:7px;
+    background:#fff0c9;
+    border:3px solid #513b31;
+    color:#70483b;
+}
+
+.tWordThai{
+    font-family:Tahoma,sans-serif;
+    font-weight:bold;
+    font-size:14px;
+}
+
+.tWordEng{
+    margin-top:4px;
+    color:#68804e;
+    font-size:12px;
+    letter-spacing:3px;
+}
+
+.tutorialText{
+    min-height:54px;
+    margin-top:15px;
+    color:#704736;
+    font-family:Tahoma,sans-serif;
+    font-size:13px;
+    font-weight:bold;
+    line-height:1.7;
+}
+
+.tutorialHint{
+    color:#987055;
+    font-size:9px;
+    margin-top:4px;
+}
+
+.tutorialButtons{
+    display:flex;
+    gap:10px;
+    margin-top:13px;
+}
+
+.tutorialButtons button{
+    flex:1;
+}
+
+.tutorialDots{
+    display:flex;
+    justify-content:center;
+    gap:7px;
+    margin-top:13px;
+}
+
+.tDot{
+    width:9px;
+    height:9px;
+    background:#c89b69;
+    border:2px solid #704d3a;
+}
+
+.tDot.active{
+    background:#78a84f;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:700px){
+
+    #hud{
+        top:7px;
+        gap:3px;
+    }
+
+    .sideHud{
+        width:73px;
+    }
+
+    #wordPanel{
+        width:205px;
+        padding:5px;
+    }
+
+    #thaiWord{
+        font-size:17px;
+    }
+
+    #answer{
+        font-size:11px;
+        letter-spacing:2px;
+    }
+
+    .card,
+    #difficultyCard{
+        width:min(94vw,590px);
+    }
+
+    .difficultyGrid{
+        grid-template-columns:1fr;
+    }
+
+    .diff{
+        min-height:90px;
+        padding:8px;
+    }
+
+    .diffPixel{
+        width:50px;
+        height:50px;
+        transform:scale(.72);
+        margin:-4px auto 0;
+    }
+
+    .diffBest{
+        display:none;
+    }
+
+    .tutorialCard{
+        min-height:430px;
+        padding:20px 17px;
+    }
+
+    .tutorialScene{
+        height:180px;
+    }
+
+    #helpBtn{
+        right:63px;
+    }
+}
+
+@media (max-height:500px) and (pointer:coarse){
+    #touchControls{
+        grid-template:
+            ". up ." 38px
+            "left . right" 38px
+            ". down ." 38px
+            /38px 38px 38px;
+        gap:2px;
+    }
+
+    #touchControls button{
+        width:38px;
+        height:38px;
+        font-size:16px;
+    }
+}
+
+#rotateScreen{display:none;}
+@media (pointer:coarse) and (orientation:portrait){
+#rotateScreen{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:#243224;color:#fff0c9;text-align:center;padding:24px;}
+.rotateCard{width:min(88vw,420px);padding:24px 20px;background:#f6ddb0;color:#513b31;border:5px solid #513b31;box-shadow:inset 0 0 0 4px #c88750,7px 7px 0 rgba(0,0,0,.28);}
+.rotateIcon{font-size:48px;line-height:1;margin-bottom:10px}.rotateTitle{font-size:17px;font-weight:bold}.rotateText{margin-top:8px;font-family:Tahoma,sans-serif;font-size:12px;line-height:1.6}}
+@media (pointer:coarse) and (orientation:landscape){
+#hud{top:max(5px,env(safe-area-inset-top));gap:4px;width:calc(100vw - 20px);justify-content:center}
+.sideHud{width:clamp(78px,13vw,105px);min-height:58px;padding:5px}
+#wordPanel{width:clamp(210px,38vw,340px);padding:5px}
+#thaiWord{font-size:clamp(14px,2.3vw,19px)} #answer{font-size:clamp(9px,1.5vw,12px)} #message{font-size:clamp(8px,1.2vw,10px)}
+#powerBar{left:max(7px,env(safe-area-inset-left));top:max(7px,env(safe-area-inset-top))}
+#helpBtn{right:max(54px,env(safe-area-inset-right) + 46px);top:max(7px,env(safe-area-inset-top))}
+#menuBtn{right:max(7px,env(safe-area-inset-right));top:max(7px,env(safe-area-inset-top))}
+.card,#difficultyCard{width:min(72vw,560px);max-height:calc(100vh - 20px);overflow:auto;padding:18px 22px}
+.tutorialCard{min-height:0;max-height:calc(100vh - 18px);overflow:auto;padding:14px 17px}
+.tutorialScene{height:min(25vh,150px)}
+#completeText{font-size:clamp(18px,3vw,28px)}
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<canvas id="canvas"></canvas>
+
+<!-- POWER BADGES -->
+<div id="powerBar">
+    <div id="shieldBadge" class="powerBadge">◆ SHIELD</div>
+    <div id="magnetBadge" class="powerBadge">✦ MAGNET</div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+
+    <div class="panel sideHud">
+        <div class="label">LIFE</div>
+        <div id="life"></div>
+    </div>
+
+    <div id="wordPanel" class="panel">
+        <div class="label">THAI → ENGLISH</div>
+
+        <div id="thaiWord">แมว</div>
+
+        <div id="answer">_ _ _</div>
+
+        <div id="progress">
+            <div id="progressFill"></div>
+        </div>
+
+        <div id="message">Find the letters</div>
+    </div>
+
+    <div class="panel sideHud">
+        <div class="label">SCORE</div>
+
+        <div id="score">0</div>
+
+        <div id="modeText">EASY ×1</div>
+
+        <div id="wordCount">WORDS 0</div>
+    </div>
+
+</div>
+
+<button id="helpBtn" title="Tutorial">?</button>
+<button id="menuBtn">☰</button>
+
+<div id="touchControls" aria-label="Touch movement controls"></div>
+<div id="mobileJoystick" aria-hidden="true"><div class="stick"></div></div>
+<div id="rotateScreen" aria-hidden="true">
+<div class="rotateCard">
+<div class="rotateIcon">↻</div>
+<div class="rotateTitle">หมุนหน้าจอเป็นแนวนอน</div>
+<div class="rotateText">เกมนี้ออกแบบสำหรับมือถือและแท็บเล็ตแบบแนวนอน</div>
+</div></div>
+
+<div id="completeText">WORD COMPLETE!</div>
+
+<!-- =====================================================
+     HOME
+===================================================== -->
+
+<div id="home" class="overlay">
+
+    <div class="card">
+
+        <div class="logoSmall">✦ WORD QUEST ✦</div>
+
+        <div class="title">
+            SWEET
+            <span>WORD GARDEN</span>
+        </div>
+
+        <div class="subtitle">
+            ENDLESS PIXEL VOCABULARY
+        </div>
+
+        <button id="playBtn" class="pixelBtn primary">
+            ▶ PLAY
+        </button>
+
+        <button id="settingsBtn" class="pixelBtn">
+            ⚙ SETTINGS
+        </button>
+
+        <button id="homeTutorialBtn" class="pixelBtn">
+            ? HOW TO PLAY
+        </button>
+
+        <div class="best">
+            ALL-TIME BEST
+            <b id="allBest">0</b>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     DIFFICULTY
+===================================================== -->
+
+<div id="difficultyScreen" class="overlay hidden">
+
+    <div id="difficultyCard" class="card">
+
+        <h2>SELECT DIFFICULTY</h2>
+
+        <p>เลือกระดับความยาก</p>
+
+        <div class="difficultyGrid">
+
+            <button class="diff easy" data-mode="easy">
+
+                <span class="diffPixel">
+                    <span class="pixelLeaf"></span>
+                </span>
+
+                <strong>ง่าย</strong>
+
+                <span class="diffBest">
+                    BEST <b id="easyBest">0</b>
+                </span>
+
+            </button>
+
+            <button class="diff normal" data-mode="normal">
+
+                <span class="diffPixel">
+                    <span class="pixelFlower"></span>
+                </span>
+
+                <strong>ปานกลาง</strong>
+
+                <span class="diffBest">
+                    BEST <b id="normalBest">0</b>
+                </span>
+
+            </button>
+
+            <button class="diff hard" data-mode="hard">
+
+                <span class="diffPixel">
+                    <span class="pixelFlame"></span>
+                </span>
+
+                <strong>ยาก</strong>
+
+                <span class="diffBest">
+                    BEST <b id="hardBest">0</b>
+                </span>
+
+            </button>
+
+        </div>
+
+        <button id="difficultyBack" class="pixelBtn">
+            BACK
+        </button>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     SETTINGS
+===================================================== -->
+
+<div id="settingsScreen" class="overlay hidden">
+
+    <div class="card">
+
+        <h2 style="color:#704736">
+            SETTINGS
+        </h2>
+
+        <div class="setting">
+
+            <div class="settingHead">
+                <span>♫ MUSIC</span>
+                <span id="musicValue">50%</span>
+            </div>
+
+            <input
+                id="musicSlider"
+                type="range"
+                min="0"
+                max="100"
+                value="50"
+            >
+
+        </div>
+
+        <div class="setting">
+
+            <div class="settingHead">
+                <span>♪ SOUND EFFECTS</span>
+                <span id="sfxValue">80%</span>
+            </div>
+
+            <input
+                id="sfxSlider"
+                type="range"
+                min="0"
+                max="100"
+                value="80"
+            >
+
+        </div>
+
+        <button id="settingsBack" class="pixelBtn primary">
+            BACK
+        </button>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     PAUSE
+===================================================== -->
+
+<div id="pauseScreen" class="overlay hidden">
+
+    <div class="card">
+
+        <h2 style="color:#704736">
+            PAUSED
+        </h2>
+
+        <button id="resumeBtn" class="pixelBtn primary">
+            RESUME
+        </button>
+
+        <button id="pauseSettings" class="pixelBtn">
+            ⚙ SETTINGS
+        </button>
+
+        <button id="pauseHome" class="pixelBtn">
+            HOME
+        </button>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     GAME OVER
+===================================================== -->
+
+<div id="gameOver" class="overlay hidden">
+
+    <div class="card">
+
+        <h1 style="color:#704736">
+            GAME OVER
+        </h1>
+
+        <div class="label">
+            YOUR SCORE
+        </div>
+
+        <div id="finalScore">0</div>
+
+        <div class="stats">
+            WORDS COMPLETED:
+            <b id="finalWords">0</b>
+            <br>
+
+            DIFFICULTY:
+            <b id="finalMode">EASY</b>
+            <br>
+
+            BEST:
+            <b id="finalBest">0</b>
+        </div>
+
+        <button id="againBtn" class="pixelBtn primary">
+            PLAY AGAIN
+        </button>
+
+        <button id="changeModeBtn" class="pixelBtn">
+            CHANGE DIFFICULTY
+        </button>
+
+        <button id="gameOverHome" class="pixelBtn">
+            HOME
+        </button>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     FIRST-TIME TUTORIAL
+===================================================== -->
+
+<div id="tutorialOverlay" class="overlay hidden">
+
+    <div class="tutorialCard">
+
+        <div class="tutorialTop">
+            <span>HOW TO PLAY</span>
+            <span id="tutorialStepLabel">1 / 5</span>
+        </div>
+
+        <div id="tutorialTitle" class="tutorialTitle">
+            เดินไปรอบ ๆ สวน
+        </div>
+
+        <div id="tutorialScene" class="tutorialScene">
+
+            <!-- Scene content generated by JS -->
+
+        </div>
+
+        <div id="tutorialText" class="tutorialText">
+            ใช้ปุ่ม W A S D หรือปุ่มลูกศรเพื่อเดินไปรอบ ๆ สนาม
+        </div>
+
+        <div id="tutorialHint" class="tutorialHint">
+            เดินสำรวจเพื่อหาตัวอักษร
+        </div>
+
+        <div class="tutorialButtons">
+
+            <button
+                id="tutorialBack"
+                class="pixelBtn"
+            >
+                ย้อนกลับ
+            </button>
+
+            <button
+                id="tutorialSkip"
+                class="pixelBtn"
+            >
+                ข้าม
+            </button>
+
+            <button
+                id="tutorialNext"
+                class="pixelBtn primary"
+            >
+                ถัดไป
+            </button>
+
+        </div>
+
+        <div id="tutorialDots" class="tutorialDots"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const touchControlsEnabled=
+    window.matchMedia("(pointer: coarse)").matches||
+    "ontouchstart" in window;
+
+ctx.imageSmoothingEnabled=false;
+
+function resize(){
+
+    canvas.width=innerWidth;
+    canvas.height=innerHeight;
+
+    makeFlowers();
+
+}
+
+addEventListener("resize",resize);
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const gameEl=document.getElementById("game");
+
+const home=document.getElementById("home");
+const difficultyScreen=document.getElementById("difficultyScreen");
+const settingsScreen=document.getElementById("settingsScreen");
+const pauseScreen=document.getElementById("pauseScreen");
+const gameOver=document.getElementById("gameOver");
+
+const tutorialOverlay=
+    document.getElementById("tutorialOverlay");
+
+const thaiWordEl=
+    document.getElementById("thaiWord");
+
+const answerEl=
+    document.getElementById("answer");
+
+const progressFill=
+    document.getElementById("progressFill");
+
+const messageEl=
+    document.getElementById("message");
+
+const scoreEl=
+    document.getElementById("score");
+
+const lifeEl=
+    document.getElementById("life");
+
+const modeText=
+    document.getElementById("modeText");
+
+const wordCount=
+    document.getElementById("wordCount");
+
+const shieldBadge=
+    document.getElementById("shieldBadge");
+
+const magnetBadge=
+    document.getElementById("magnetBadge");
+
+const playBtn=
+    document.getElementById("playBtn");
+
+const settingsBtn=
+    document.getElementById("settingsBtn");
+
+const homeTutorialBtn=
+    document.getElementById("homeTutorialBtn");
+
+const helpBtn=
+    document.getElementById("helpBtn");
+
+const touchControls=document.getElementById("touchControls");
+const mobileJoystick=document.getElementById("mobileJoystick");
+const joystickStick=mobileJoystick.querySelector(".stick");
+
+const difficultyBack=
+    document.getElementById("difficultyBack");
+
+const settingsBack=
+    document.getElementById("settingsBack");
+
+const menuBtn=
+    document.getElementById("menuBtn");
+
+const resumeBtn=
+    document.getElementById("resumeBtn");
+
+const pauseSettings=
+    document.getElementById("pauseSettings");
+
+const pauseHome=
+    document.getElementById("pauseHome");
+
+const againBtn=
+    document.getElementById("againBtn");
+
+const changeModeBtn=
+    document.getElementById("changeModeBtn");
+
+const gameOverHome=
+    document.getElementById("gameOverHome");
+
+const easyBest=
+    document.getElementById("easyBest");
+
+const normalBest=
+    document.getElementById("normalBest");
+
+const hardBest=
+    document.getElementById("hardBest");
+
+const allBest=
+    document.getElementById("allBest");
+
+const finalScore=
+    document.getElementById("finalScore");
+
+const finalWords=
+    document.getElementById("finalWords");
+
+const finalMode=
+    document.getElementById("finalMode");
+
+const finalBest=
+    document.getElementById("finalBest");
+
+const musicSlider=
+    document.getElementById("musicSlider");
+
+const sfxSlider=
+    document.getElementById("sfxSlider");
+
+const musicValue=
+    document.getElementById("musicValue");
+
+const sfxValue=
+    document.getElementById("sfxValue");
+
+/* =========================================================
+   VOCABULARY
+========================================================= */
+
+const offlineTranslations={
+
+cat:"แมว",
+dog:"สุนัข",
+fish:"ปลา",
+bird:"นก",
+duck:"เป็ด",
+frog:"กบ",
+pig:"หมู",
+cow:"วัว",
+bear:"หมี",
+lion:"สิงโต",
+wolf:"หมาป่า",
+goat:"แพะ",
+deer:"กวาง",
+horse:"ม้า",
+sheep:"แกะ",
+snake:"งู",
+shark:"ฉลาม",
+whale:"ปลาวาฬ",
+panda:"แพนด้า",
+tiger:"เสือ",
+rabbit:"กระต่าย",
+monkey:"ลิง",
+giraffe:"ยีราฟ",
+penguin:"เพนกวิน",
+dolphin:"โลมา",
+chicken:"ไก่",
+hamster:"หนูแฮมสเตอร์",
+elephant:"ช้าง",
+butterfly:"ผีเสื้อ",
+crocodile:"จระเข้",
+kangaroo:"จิงโจ้",
+
+sun:"ดวงอาทิตย์",
+moon:"พระจันทร์",
+star:"ดาว",
+rain:"ฝน",
+snow:"หิมะ",
+wind:"ลม",
+tree:"ต้นไม้",
+grass:"หญ้า",
+river:"แม่น้ำ",
+beach:"ชายหาด",
+ocean:"มหาสมุทร",
+cloud:"เมฆ",
+flower:"ดอกไม้",
+forest:"ป่า",
+island:"เกาะ",
+nature:"ธรรมชาติ",
+mountain:"ภูเขา",
+waterfall:"น้ำตก",
+environment:"สิ่งแวดล้อม",
+
+egg:"ไข่",
+rice:"ข้าว",
+milk:"นม",
+cake:"เค้ก",
+soup:"ซุป",
+meat:"เนื้อ",
+bread:"ขนมปัง",
+sugar:"น้ำตาล",
+honey:"น้ำผึ้ง",
+pizza:"พิซซ่า",
+pasta:"พาสต้า",
+apple:"แอปเปิล",
+grape:"องุ่น",
+mango:"มะม่วง",
+lemon:"มะนาว",
+melon:"แตงโม",
+banana:"กล้วย",
+orange:"ส้ม",
+cookie:"คุกกี้",
+cheese:"ชีส",
+coffee:"กาแฟ",
+noodle:"ก๋วยเตี๋ยว",
+breakfast:"อาหารเช้า",
+pineapple:"สับปะรด",
+chocolate:"ช็อกโกแลต",
+strawberry:"สตรอว์เบอร์รี",
+
+car:"รถ",
+bus:"รถบัส",
+boat:"เรือ",
+book:"หนังสือ",
+bed:"เตียง",
+door:"ประตู",
+desk:"โต๊ะเรียน",
+bag:"กระเป๋า",
+cup:"ถ้วย",
+pen:"ปากกา",
+phone:"โทรศัพท์",
+clock:"นาฬิกา",
+spoon:"ช้อน",
+plate:"จาน",
+bottle:"ขวด",
+chair:"เก้าอี้",
+shirt:"เสื้อ",
+skirt:"กระโปรง",
+shoes:"รองเท้า",
+window:"หน้าต่าง",
+umbrella:"ร่ม",
+bicycle:"จักรยาน",
+computer:"คอมพิวเตอร์",
+suitcase:"กระเป๋าเดินทาง",
+camera:"กล้องถ่ายรูป",
+pencil:"ดินสอ",
+notebook:"สมุด",
+backpack:"กระเป๋าสะพายหลัง",
+keyboard:"แป้นพิมพ์",
+television:"โทรทัศน์",
+
+home:"บ้าน",
+house:"บ้าน",
+city:"เมือง",
+road:"ถนน",
+school:"โรงเรียน",
+park:"สวนสาธารณะ",
+hotel:"โรงแรม",
+market:"ตลาด",
+airport:"สนามบิน",
+library:"ห้องสมุด",
+hospital:"โรงพยาบาล",
+kitchen:"ห้องครัว",
+bedroom:"ห้องนอน",
+bathroom:"ห้องน้ำ",
+village:"หมู่บ้าน",
+country:"ประเทศ",
+restaurant:"ร้านอาหาร",
+university:"มหาวิทยาลัย",
+supermarket:"ซูเปอร์มาร์เก็ต",
+
+eye:"ตา",
+ear:"หู",
+nose:"จมูก",
+hand:"มือ",
+foot:"เท้า",
+head:"ศีรษะ",
+mouth:"ปาก",
+face:"ใบหน้า",
+hair:"ผม",
+finger:"นิ้วมือ",
+shoulder:"ไหล่",
+stomach:"ท้อง",
+
+run:"วิ่ง",
+walk:"เดิน",
+read:"อ่าน",
+write:"เขียน",
+sleep:"นอน",
+drink:"ดื่ม",
+speak:"พูด",
+smile:"ยิ้ม",
+laugh:"หัวเราะ",
+dance:"เต้น",
+jump:"กระโดด",
+swim:"ว่ายน้ำ",
+listen:"ฟัง",
+study:"เรียน",
+travel:"เดินทาง",
+remember:"จดจำ",
+understand:"เข้าใจ",
+
+boy:"เด็กผู้ชาย",
+girl:"เด็กผู้หญิง",
+family:"ครอบครัว",
+friend:"เพื่อน",
+teacher:"ครู",
+student:"นักเรียน",
+doctor:"แพทย์",
+farmer:"เกษตรกร",
+police:"ตำรวจ",
+engineer:"วิศวกร",
+scientist:"นักวิทยาศาสตร์",
+language:"ภาษา",
+question:"คำถาม",
+answer:"คำตอบ",
+holiday:"วันหยุด",
+birthday:"วันเกิด",
+adventure:"การผจญภัย",
+education:"การศึกษา",
+technology:"เทคโนโลยี",
+beautiful:"สวยงาม",
+different:"แตกต่าง",
+dangerous:"อันตราย",
+wonderful:"มหัศจรรย์",
+interesting:"น่าสนใจ",
+happiness:"ความสุข"
+
+};
+
+/*
+   Dictionary lookup: FreeDictionaryAPI.com (data sourced from Wiktionary).
+   We only accept Thai translations already present in dictionary entries.
+   No machine-translation fallback is used.
+*/
+const DICTIONARY_API = "https://freedictionaryapi.com/api/v1/entries/en/";
+const translationCacheKey = "SWG_dictionary_translations_v3";
+let translationCache = {};
+
+try {
+    const cached = JSON.parse(localStorage.getItem(translationCacheKey) || "{}");
+    if (cached && typeof cached === "object" && !Array.isArray(cached)) {
+        translationCache = cached;
+    }
+} catch (error) {
+    translationCache = {};
+    console.warn("Could not read cached dictionary entries.", error);
+}
+
+function isThaiTranslation(value) {
+    return typeof value === "string" &&
+        /\p{Script=Thai}/u.test(value) &&
+        value.length <= 120;
+}
+
+function collectThaiDictionaryTranslations(senses, found) {
+    if (!Array.isArray(senses)) return;
+    for (const sense of senses) {
+        for (const item of (Array.isArray(sense.translations) ? sense.translations : [])) {
+            const langCode = String(item?.language?.code || "").toLowerCase();
+            const translation = String(item?.word || "").trim();
+            if ((langCode === "th" || langCode === "tha") && isThaiTranslation(translation)) {
+                found.push(translation);
+            }
+        }
+        collectThaiDictionaryTranslations(sense.subsenses, found);
+    }
+}
+
+async function fetchTranslation(english) {
+    const key = String(english || "").trim().toLowerCase();
+    if (!key) throw new Error("Missing dictionary headword.");
+
+    const cached = translationCache[key];
+    if (isThaiTranslation(cached?.thai)) return cached.thai;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 9000);
+    try {
+        const url = DICTIONARY_API + encodeURIComponent(key) + "?translations=true";
+        const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok) throw new Error("Dictionary lookup failed: " + response.status);
+
+        const result = await response.json();
+        const entries = Array.isArray(result?.entries) ? result.entries : [];
+        const translations = [];
+
+        for (const entry of entries) {
+            const languageCode = String(entry?.language?.code || "").toLowerCase();
+            if (languageCode !== "en" && languageCode !== "eng") continue;
+            collectThaiDictionaryTranslations(entry.senses, translations);
+        }
+
+        // Dictionary senses are generally ordered from the most common meaning first.
+        // Show only one Thai translation to keep the game's vocabulary clear.
+        const unique = [...new Set(translations)];
+        if (!unique.length) throw new Error("No Thai dictionary translation found for: " + key);
+
+        const thai = unique[0];
+        translationCache[key] = {
+            thai,
+            source: result?.source?.url || "https://en.wiktionary.org/wiki/" + encodeURIComponent(key),
+            fetchedAt: Date.now()
+        };
+        try {
+            localStorage.setItem(translationCacheKey, JSON.stringify(translationCache));
+        } catch (error) {
+            console.warn("Could not cache dictionary translation.", error);
+        }
+        return thai;
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+async function updateWordTranslation(word) {
+    try {
+        const translated = await fetchTranslation(word.english);
+        word.thai = translated;
+        if (currentWord === word) {
+            thaiWordEl.textContent = translated;
+            if (index === 0) {
+                messageEl.textContent = "Dictionary source: Wiktionary • Find the first letter";
+            }
+        }
+    } catch (error) {
+        // Keep the checked-in English–Thai dictionary entry; never machine-translate it.
+        if (currentWord === word && index === 0) {
+            messageEl.textContent = "Using saved dictionary meaning • Find the first letter";
+        }
+        console.warn("Dictionary lookup unavailable for " + word.english + "; using saved meaning.", error);
+    }
+}
+
+function getMasterVocabulary(){
+
+    return Object.keys(offlineTranslations);
+
+}
+
+/* =========================================================
+   DIFFICULTY
+========================================================= */
+
+const modes={
+
+easy:{
+    min:2,
+    max:4,
+    fake:3,
+    bugs:2,
+    bugSpeed:22,
+    multiplier:1
+},
+
+normal:{
+    min:5,
+    max:7,
+    fake:5,
+    bugs:4,
+    bugSpeed:31,
+    multiplier:1.5
+},
+
+hard:{
+    min:8,
+    max:99,
+    fake:7,
+    bugs:5,
+    bugSpeed:42,
+    multiplier:2
+}
+
+};
+
+let mode="easy";
+
+/* =========================================================
+   BEST SCORE
+========================================================= */
+
+let best={
+
+easy:
+Number(
+    localStorage.getItem("SWG_best_easy")
+)||0,
+
+normal:
+Number(
+    localStorage.getItem("SWG_best_normal")
+)||0,
+
+hard:
+Number(
+    localStorage.getItem("SWG_best_hard")
+)||0
+
+};
+
+function refreshBest(){
+
+    easyBest.textContent=best.easy;
+    normalBest.textContent=best.normal;
+    hardBest.textContent=best.hard;
+
+    allBest.textContent=
+        Math.max(
+            best.easy,
+            best.normal,
+            best.hard
+        );
+
+}
+
+refreshBest();
+
+/* =========================================================
+   GAME STATE
+========================================================= */
+
+let running=false;
+let paused=false;
+let roundLocked=false;
+
+let score=0;
+let life=3;
+let combo=0;
+let wordsCompleted=0;
+
+let currentWord=null;
+let index=0;
+
+let letters=[];
+let bugs=[];
+let powers=[];
+let particles=[];
+
+let damageCooldown=0;
+
+let shield=false;
+let magnetTimer=0;
+
+let worldTime=0;
+
+/* =========================================================
+   WORD HISTORY
+========================================================= */
+
+const history={
+    easy:[],
+    normal:[],
+    hard:[]
+};
+
+function chooseWord(){
+
+    const config=modes[mode];
+
+    const pool=
+        getMasterVocabulary()
+        .filter(word=>
+            word.length>=config.min&&
+            word.length<=config.max
+        );
+
+    let available=
+        pool.filter(
+            word=>
+                !history[mode].includes(word)
+        );
+
+    if(available.length===0){
+
+        history[mode]=[];
+
+        available=[...pool];
+
+    }
+
+    const english=
+        available[
+            Math.floor(
+                Math.random()*available.length
+            )
+        ];
+
+    history[mode].push(english);
+
+    return{
+        thai:offlineTranslations[english],
+        english:english.toUpperCase()
+    };
+
+}
+
+/* =========================================================
+   FIELD
+========================================================= */
+
+const FIELD={
+    left:38,
+    right:38,
+    top:138,
+    bottom:touchControlsEnabled?166:32
+};
+
+function bounds(){
+
+    return{
+
+        left:
+            FIELD.left+25,
+
+        right:
+            canvas.width-
+            FIELD.right-
+            25,
+
+        top:
+            FIELD.top+25,
+
+        bottom:
+            canvas.height-
+            FIELD.bottom-
+            25
+
+    };
+
+}
+
+/* =========================================================
+   FLOWERS
+========================================================= */
+
+let flowers=[];
+
+function makeFlowers(){
+
+    flowers=[];
+
+    const b=bounds();
+
+    const amount=
+        Math.max(
+            22,
+            Math.floor(
+                canvas.width*
+                canvas.height/
+                30000
+            )
+        );
+
+    for(let i=0;i<amount;i++){
+
+        flowers.push({
+
+            x:
+                b.left+
+                20+
+                Math.random()*
+                Math.max(
+                    10,
+                    b.right-b.left-40
+                ),
+
+            y:
+                b.top+
+                20+
+                Math.random()*
+                Math.max(
+                    10,
+                    b.bottom-b.top-40
+                ),
+
+            type:
+                Math.floor(
+                    Math.random()*4
+                ),
+
+            phase:
+                Math.random()*10
+
+        });
+
+    }
+
+}
+
+/* =========================================================
+   PIXEL HELPERS
+========================================================= */
+
+function rect(
+    x,
+    y,
+    w,
+    h,
+    color
+){
+
+    ctx.fillStyle=color;
+
+    ctx.fillRect(
+        Math.round(x),
+        Math.round(y),
+        Math.round(w),
+        Math.round(h)
+    );
+
+}
+
+function shuffle(array){
+
+    for(
+        let i=array.length-1;
+        i>0;
+        i--
+    ){
+
+        const j=
+            Math.floor(
+                Math.random()*(i+1)
+            );
+
+        [
+            array[i],
+            array[j]
+        ]=[
+            array[j],
+            array[i]
+        ];
+
+    }
+
+    return array;
+
+}
+
+/* =========================================================
+   GRASS
+========================================================= */
+
+function drawGrass(){
+
+    ctx.fillStyle="#7db15b";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    const tile=32;
+
+    for(
+        let y=0;
+        y<canvas.height;
+        y+=tile
+    ){
+
+        for(
+            let x=0;
+            x<canvas.width;
+            x+=tile
+        ){
+
+            const alternate=
+                (
+                    x/tile+
+                    y/tile
+                )%2===0;
+
+            ctx.fillStyle=
+                alternate
+                ?" #80b45e".trim()
+                :"#7bae59";
+
+            ctx.fillRect(
+                x,
+                y,
+                tile,
+                tile
+            );
+
+            ctx.fillStyle=
+                "rgba(62,109,54,.10)";
+
+            ctx.fillRect(
+                x+8,
+                y+10,
+                2,
+                2
+            );
+
+            ctx.fillRect(
+                x+24,
+                y+23,
+                2,
+                2
+            );
+
+        }
+
+    }
+
+}
+
+function drawFlowers(){
+
+    const colors=[
+        "#f6d56e",
+        "#f29aaa",
+        "#eadcff",
+        "#fff0d8"
+    ];
+
+    flowers.forEach(f=>{
+
+        const sway=
+            Math.floor(
+                worldTime*2+
+                f.phase
+            )%2;
+
+        const x=f.x+sway;
+        const y=f.y;
+
+        rect(
+            x+3,
+            y+5,
+            2,
+            5,
+            "#4e8848"
+        );
+
+        rect(
+            x,
+            y+1,
+            3,
+            3,
+            colors[f.type]
+        );
+
+        rect(
+            x+5,
+            y+1,
+            3,
+            3,
+            colors[f.type]
+        );
+
+        rect(
+            x+2,
+            y-2,
+            4,
+            3,
+            colors[f.type]
+        );
+
+        rect(
+            x+2,
+            y+4,
+            4,
+            3,
+            colors[f.type]
+        );
+
+        rect(
+            x+3,
+            y+1,
+            2,
+            2,
+            "#e4b74e"
+        );
+
+    });
+
+}
+
+/* =========================================================
+   FENCE
+========================================================= */
+
+function drawFence(){
+
+    const L=FIELD.left;
+    const R=canvas.width-FIELD.right;
+    const T=FIELD.top;
+    const B=canvas.height-FIELD.bottom;
+
+    const dark="#63442f";
+    const wood="#986641";
+    const light="#c38a55";
+
+    /* TOP */
+
+    rect(
+        L,
+        T,
+        R-L,
+        6,
+        dark
+    );
+
+    rect(
+        L,
+        T+12,
+        R-L,
+        6,
+        dark
+    );
+
+    rect(
+        L,
+        T+1,
+        R-L,
+        3,
+        wood
+    );
+
+    rect(
+        L,
+        T+13,
+        R-L,
+        3,
+        wood
+    );
+
+    for(
+        let x=L;
+        x<=R;
+        x+=30
+    ){
+
+        rect(
+            x-2,
+            T-8,
+            10,
+            31,
+            dark
+        );
+
+        rect(
+            x,
+            T-10,
+            6,
+            31,
+            wood
+        );
+
+        rect(
+            x+1,
+            T-11,
+            4,
+            4,
+            light
+        );
+
+    }
+
+    /* BOTTOM */
+
+    rect(
+        L,
+        B-18,
+        R-L,
+        6,
+        dark
+    );
+
+    rect(
+        L,
+        B-6,
+        R-L,
+        6,
+        dark
+    );
+
+    rect(
+        L,
+        B-17,
+        R-L,
+        3,
+        wood
+    );
+
+    rect(
+        L,
+        B-5,
+        R-L,
+        3,
+        wood
+    );
+
+    for(
+        let x=L;
+        x<=R;
+        x+=30
+    ){
+
+        rect(
+            x-2,
+            B-23,
+            10,
+            31,
+            dark
+        );
+
+        rect(
+            x,
+            B-25,
+            6,
+            31,
+            wood
+        );
+
+        rect(
+            x+1,
+            B-26,
+            4,
+            4,
+            light
+        );
+
+    }
+
+    /* LEFT */
+
+    rect(
+        L,
+        T,
+        6,
+        B-T,
+        dark
+    );
+
+    rect(
+        L+12,
+        T,
+        6,
+        B-T,
+        dark
+    );
+
+    rect(
+        L+1,
+        T,
+        3,
+        B-T,
+        wood
+    );
+
+    rect(
+        L+13,
+        T,
+        3,
+        B-T,
+        wood
+    );
+
+    for(
+        let y=T;
+        y<=B;
+        y+=30
+    ){
+
+        rect(
+            L-8,
+            y-2,
+            31,
+            10,
+            dark
+        );
+
+        rect(
+            L-10,
+            y,
+            31,
+            6,
+            wood
+        );
+
+        rect(
+            L-11,
+            y+1,
+            4,
+            4,
+            light
+        );
+
+    }
+
+    /* RIGHT */
+
+    rect(
+        R-18,
+        T,
+        6,
+        B-T,
+        dark
+    );
+
+    rect(
+        R-6,
+        T,
+        6,
+        B-T,
+        dark
+    );
+
+    rect(
+        R-17,
+        T,
+        3,
+        B-T,
+        wood
+    );
+
+    rect(
+        R-5,
+        T,
+        3,
+        B-T,
+        wood
+    );
+
+    for(
+        let y=T;
+        y<=B;
+        y+=30
+    ){
+
+        rect(
+            R-23,
+            y-2,
+            31,
+            10,
+            dark
+        );
+
+        rect(
+            R-21,
+            y,
+            31,
+            6,
+            wood
+        );
+
+        rect(
+            R+7,
+            y+1,
+            4,
+            4,
+            light
+        );
+
+    }
+
+    cornerPost(L,T);
+    cornerPost(R-8,T);
+    cornerPost(L,B-8);
+    cornerPost(R-8,B-8);
+
+}
+
+function cornerPost(x,y){
+
+    rect(
+        x-3,
+        y-5,
+        14,
+        20,
+        "#5b3e2d"
+    );
+
+    rect(
+        x,
+        y-7,
+        8,
+        20,
+        "#a36d43"
+    );
+
+    rect(
+        x+2,
+        y-9,
+        4,
+        5,
+        "#d19a5c"
+    );
+
+}
+
+/* =========================================================
+   PLAYER
+========================================================= */
+
+const player={
+
+    x:200,
+    y:300,
+
+    w:32,
+    h:45,
+
+    speed:155,
+
+    direction:"down",
+
+    moving:false,
+
+    frame:1,
+
+    frameTimer:0
+
+};
+
+const keys={
+
+    up:false,
+    down:false,
+    left:false,
+    right:false
+
+};
+
+function drawPlayer(){
+
+    const x=
+        Math.round(player.x);
+
+    let y=
+        Math.round(player.y);
+
+    const bob=
+        player.moving&&
+        player.frame===1
+        ?-2
+        :0;
+
+    y+=bob;
+
+    rect(
+        x+6,
+        y+39,
+        21,
+        6,
+        "rgba(38,54,38,.28)"
+    );
+
+    if(shield){
+        drawShield(
+            x+16,
+            y+23
+        );
+    }
+
+    if(magnetTimer>0){
+        drawMagnetAura(
+            x+16,
+            y+23
+        );
+    }
+
+    let legL=0;
+    let legR=0;
+
+    if(player.moving){
+
+        if(player.frame===0){
+            legL=2;
+            legR=-1;
+        }
+
+        if(player.frame===2){
+            legL=-1;
+            legR=2;
+        }
+
+    }
+
+    rect(
+        x+8,
+        y+34+legL,
+        6,
+        8,
+        "#554f58"
+    );
+
+    rect(
+        x+19,
+        y+34+legR,
+        6,
+        8,
+        "#554f58"
+    );
+
+    rect(
+        x+6,
+        y+21,
+        21,
+        17,
+        "#6d86bb"
+    );
+
+    rect(
+        x+9,
+        y+21,
+        15,
+        4,
+        "#91a8d1"
+    );
+
+    const arm=
+        player.moving
+        ?player.frame===0
+            ?2
+            :player.frame===2
+                ?-2
+                :0
+        :0;
+
+    rect(
+        x+3,
+        y+23+arm,
+        5,
+        13,
+        "#f0b690"
+    );
+
+    rect(
+        x+25,
+        y+23-arm,
+        5,
+        13,
+        "#f0b690"
+    );
+
+    rect(
+        x+5,
+        y+4,
+        23,
+        19,
+        "#5b4035"
+    );
+
+    rect(
+        x+3,
+        y+9,
+        27,
+        12,
+        "#5b4035"
+    );
+
+    rect(
+        x+8,
+        y+8,
+        17,
+        16,
+        "#f1bd96"
+    );
+
+    rect(
+        x+6,
+        y+4,
+        21,
+        7,
+        "#68483a"
+    );
+
+    rect(
+        x+4,
+        y+7,
+        7,
+        8,
+        "#68483a"
+    );
+
+    rect(
+        x+23,
+        y+7,
+        6,
+        8,
+        "#68483a"
+    );
+
+    if(player.direction==="down"){
+
+        rect(
+            x+11,
+            y+14,
+            3,
+            3,
+            "#493b38"
+        );
+
+        rect(
+            x+20,
+            y+14,
+            3,
+            3,
+            "#493b38"
+        );
+
+        rect(
+            x+12,
+            y+13,
+            1,
+            1,
+            "white"
+        );
+
+        rect(
+            x+21,
+            y+13,
+            1,
+            1,
+            "white"
+        );
+
+        rect(
+            x+15,
+            y+19,
+            4,
+            2,
+            "#c96f72"
+        );
+
+    }else if(player.direction==="left"){
+
+        rect(
+            x+9,
+            y+14,
+            3,
+            3,
+            "#493b38"
+        );
+
+        rect(
+            x+9,
+            y+13,
+            1,
+            1,
+            "white"
+        );
+
+    }else if(player.direction==="right"){
+
+        rect(
+            x+21,
+            y+14,
+            3,
+            3,
+            "#493b38"
+        );
+
+        rect(
+            x+22,
+            y+13,
+            1,
+            1,
+            "white"
+        );
+
+    }else{
+
+        rect(
+            x+8,
+            y+10,
+            17,
+            14,
+            "#68483a"
+        );
+
+        rect(
+            x+11,
+            y+6,
+            12,
+            7,
+            "#795244"
+        );
+
+    }
+
+}
+
+function drawShield(x,y){
+
+    ctx.strokeStyle="#a5e3f2";
+    ctx.lineWidth=3;
+
+    ctx.strokeRect(
+        Math.round(x-24),
+        Math.round(y-28),
+        48,
+        55
+    );
+
+}
+
+function drawMagnetAura(x,y){
+
+    const points=[
+        [-26,-14],
+        [25,-4],
+        [-17,25],
+        [19,21]
+    ];
+
+    points.forEach((p,i)=>{
+
+        if(
+            (
+                i+
+                Math.floor(worldTime*8)
+            )%2===0
+        ){
+
+            rect(
+                x+p[0],
+                y+p[1],
+                4,
+                4,
+                "#e5b8ed"
+            );
+
+        }
+
+    });
+
+}
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+addEventListener(
+    "keydown",
+    e=>{
+
+        const k=e.key.toLowerCase();
+
+        if(
+            k==="escape"&&
+            running
+        ){
+
+            togglePause();
+
+            return;
+
+        }
+
+        if(paused)return;
+
+        if(
+            k==="w"||
+            k==="arrowup"
+        ){
+            keys.up=true;
+        }
+
+        if(
+            k==="s"||
+            k==="arrowdown"
+        ){
+            keys.down=true;
+        }
+
+        if(
+            k==="a"||
+            k==="arrowleft"
+        ){
+            keys.left=true;
+        }
+
+        if(
+            k==="d"||
+            k==="arrowright"
+        ){
+            keys.right=true;
+        }
+
+        if(k.startsWith("arrow")){
+            e.preventDefault();
+        }
+
+    }
+);
+
+addEventListener(
+    "keyup",
+    e=>{
+
+        const k=e.key.toLowerCase();
+
+        if(
+            k==="w"||
+            k==="arrowup"
+        ){
+            keys.up=false;
+        }
+
+        if(
+            k==="s"||
+            k==="arrowdown"
+        ){
+            keys.down=false;
+        }
+
+        if(
+            k==="a"||
+            k==="arrowleft"
+        ){
+            keys.left=false;
+        }
+
+        if(
+            k==="d"||
+            k==="arrowright"
+        ){
+            keys.right=false;
+        }
+
+    }
+);
+
+let joystickTouchId=null;
+let joystickStartX=0;
+let joystickStartY=0;
+const JOYSTICK_RADIUS=42;
+const JOYSTICK_DEADZONE=9;
+
+function resetJoystick(){
+    joystickTouchId=null;
+    keys.up=false;keys.down=false;keys.left=false;keys.right=false;
+    mobileJoystick.style.display="none";
+    joystickStick.style.transform="translate(0,0)";
+}
+function updateJoystick(touch){
+    const dx=touch.clientX-joystickStartX;
+    const dy=touch.clientY-joystickStartY;
+    const distance=Math.hypot(dx,dy);
+    const clamped=Math.min(distance,JOYSTICK_RADIUS);
+    const angle=Math.atan2(dy,dx);
+    joystickStick.style.transform=`translate(${Math.cos(angle)*clamped}px,${Math.sin(angle)*clamped}px)`;
+    keys.left=dx < -JOYSTICK_DEADZONE; keys.right=dx > JOYSTICK_DEADZONE;
+    keys.up=dy < -JOYSTICK_DEADZONE; keys.down=dy > JOYSTICK_DEADZONE;
+}
+if(touchControlsEnabled){
+    canvas.addEventListener("touchstart",event=>{
+        if(!running||paused||joystickTouchId!==null)return;
+        const touch=event.changedTouches[0];
+        joystickTouchId=touch.identifier;
+        joystickStartX=touch.clientX; joystickStartY=touch.clientY;
+        mobileJoystick.style.left=joystickStartX+"px";
+        mobileJoystick.style.top=joystickStartY+"px";
+        mobileJoystick.style.display="block";
+        joystickStick.style.transform="translate(0,0)";
+        event.preventDefault();
+    },{passive:false});
+    // Track the active finger on window, so dragging outside the canvas never drops movement.
+    window.addEventListener("touchmove",event=>{
+        if(joystickTouchId===null)return;
+        for(const touch of event.changedTouches){
+            if(touch.identifier===joystickTouchId){
+                updateJoystick(touch);
+                event.preventDefault();
+                break;
+            }
+        }
+    },{passive:false});
+    const endJoystick=event=>{
+        if(joystickTouchId===null)return;
+        for(const touch of event.changedTouches){
+            if(touch.identifier===joystickTouchId){
+                resetJoystick();
+                event.preventDefault();
+                break;
+            }
+        }
+    };
+    window.addEventListener("touchend",endJoystick,{passive:false});
+    window.addEventListener("touchcancel",endJoystick,{passive:false});
+}
+addEventListener("blur",clearKeys);
+
+function clearKeys(){
+    keys.up=false;keys.down=false;keys.left=false;keys.right=false;
+    if(touchControlsEnabled){
+        joystickTouchId=null;
+        mobileJoystick.style.display="none";
+        joystickStick.style.transform="translate(0,0)";
+    }
+}
+
+function updatePlayer(dt){
+
+    let dx=0;
+    let dy=0;
+
+    if(keys.left)dx--;
+    if(keys.right)dx++;
+    if(keys.up)dy--;
+    if(keys.down)dy++;
+
+    player.moving=
+        dx!==0||
+        dy!==0;
+
+    if(player.moving){
+
+        if(Math.abs(dx)>Math.abs(dy)){
+
+            player.direction=
+                dx<0
+                ?"left"
+                :"right";
+
+        }else{
+
+            player.direction=
+                dy<0
+                ?"up"
+                :"down";
+
+        }
+
+        if(dx&&dy){
+
+            dx*=.7071;
+            dy*=.7071;
+
+        }
+
+        player.x+=
+            dx*
+            player.speed*
+            dt;
+
+        player.y+=
+            dy*
+            player.speed*
+            dt;
+
+        player.frameTimer+=dt;
+
+        if(player.frameTimer>.13){
+
+            player.frameTimer=0;
+
+            player.frame=
+                (
+                    player.frame+1
+                )%3;
+
+            footSound();
+
+        }
+
+    }else{
+
+        player.frame=1;
+
+    }
+
+    const b=bounds();
+
+    player.x=
+        Math.max(
+            b.left,
+            Math.min(
+                b.right-player.w,
+                player.x
+            )
+        );
+
+    player.y=
+        Math.max(
+            b.top,
+            Math.min(
+                b.bottom-player.h,
+                player.y
+            )
+        );
+
+}
+
+function playerBox(){
+
+    return{
+
+        x:player.x+9,
+        y:player.y+32,
+        w:15,
+        h:12
+
+    };
+
+}
+
+function hit(a,b){
+
+    return(
+
+        a.x<b.x+b.w&&
+        a.x+a.w>b.x&&
+        a.y<b.y+b.h&&
+        a.y+a.h>b.y
+
+    );
+
+}
+
+/* =========================================================
+   SAFE SPAWN
+========================================================= */
+
+function randomPosition(distance=70){
+
+    const b=bounds();
+
+    let x=b.left+30;
+    let y=b.top+30;
+
+    for(
+        let tries=0;
+        tries<600;
+        tries++
+    ){
+
+        x=
+            b.left+
+            25+
+            Math.random()*
+            Math.max(
+                30,
+                b.right-b.left-80
+            );
+
+        y=
+            b.top+
+            25+
+            Math.random()*
+            Math.max(
+                30,
+                b.bottom-b.top-80
+            );
+
+        let safe=
+            Math.hypot(
+                x-player.x,
+                y-player.y
+            )>90;
+
+        if(safe){
+
+            for(const l of letters){
+
+                if(
+                    l.active&&
+                    Math.hypot(
+                        x-l.x,
+                        y-l.y
+                    )<distance
+                ){
+
+                    safe=false;
+                    break;
+
+                }
+
+            }
+
+        }
+
+        if(safe){
+
+            for(const bug of bugs){
+
+                if(
+                    Math.hypot(
+                        x-bug.x,
+                        y-bug.y
+                    )<65
+                ){
+
+                    safe=false;
+                    break;
+
+                }
+
+            }
+
+        }
+
+        if(safe){
+
+            for(const p of powers){
+
+                if(
+                    p.active&&
+                    Math.hypot(
+                        x-p.x,
+                        y-p.y
+                    )<60
+                ){
+
+                    safe=false;
+                    break;
+
+                }
+
+            }
+
+        }
+
+        if(safe){
+            return{x,y};
+        }
+
+    }
+
+    return{x,y};
+
+}
+
+/* =========================================================
+   NEW WORD
+========================================================= */
+
+function newWord(){
+
+    roundLocked=false;
+
+    letters=[];
+
+    currentWord=chooseWord();
+
+    index=0;
+
+    thaiWordEl.textContent=
+        currentWord.thai;
+
+    messageEl.textContent=
+        "Find the first letter • Loading translation";
+
+    updateWordTranslation(currentWord);
+
+    updateAnswer();
+
+    makeLetters();
+
+    if(Math.random()<.28){
+        makePower();
+    }
+
+}
+
+/* =========================================================
+   ANSWER
+========================================================= */
+
+function updateAnswer(){
+
+    answerEl.textContent=
+        currentWord.english
+        .split("")
+        .map(
+            (c,i)=>
+                i<index
+                ?c
+                :"_"
+        )
+        .join(" ");
+
+    progressFill.style.width=
+        (
+            index/
+            currentWord.english.length*
+            100
+        )+"%";
+
+}
+
+/* =========================================================
+   LETTER CREATION
+========================================================= */
+
+function makeLetters(){
+
+    letters=[];
+
+    /*
+       สำคัญ:
+       ไม่ใช้ Set กับตัวอักษรคำตอบ
+       ดังนั้น PIZZA จะได้ P I Z Z A
+       และ Z ทั้งสองตัวจะเกิดพร้อมกัน
+    */
+
+    const answerLetters=
+        currentWord.english.split("");
+
+    const alphabet=
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        .split("")
+        .filter(
+            letter=>
+                !currentWord.english.includes(letter)
+        );
+
+    shuffle(alphabet);
+
+    const fakeLetters=
+        alphabet.slice(
+            0,
+            modes[mode].fake
+        );
+
+    const pool=[
+        ...answerLetters,
+        ...fakeLetters
+    ];
+
+    shuffle(pool);
+
+    pool.forEach(
+        (letter,spawnIndex)=>{
+
+            const p=
+                randomPosition(
+                    mode==="hard"
+                    ?50
+                    :mode==="normal"
+                        ?60
+                        :70
+                );
+
+            letters.push({
+
+                id:
+                    "letter_"+
+                    Date.now()+
+                    "_"+
+                    spawnIndex,
+
+                letter:letter,
+
+                x:p.x,
+                y:p.y,
+
+                active:true,
+                locked:false,
+
+                phase:
+                    Math.random()*6,
+
+                food:
+                    Math.floor(
+                        Math.random()*4
+                    )
+
+            });
+
+        }
+    );
+
+}
+
+/* =========================================================
+   DRAW LETTERS
+========================================================= */
+
+function drawLetters(){
+
+    letters.forEach(l=>{
+
+        if(!l.active)return;
+
+        const y=
+            l.y+
+            Math.sin(
+                worldTime*4+
+                l.phase
+            )*2;
+
+        drawFoodLetter(
+            l.x,
+            y,
+            l.letter,
+            l.food
+        );
+
+    });
+
+}
+
+function drawFoodLetter(
+    x,
+    y,
+    letter,
+    type
+){
+
+    rect(
+        x+5,
+        y+30,
+        28,
+        5,
+        "rgba(40,55,35,.22)"
+    );
+
+    if(type===0){
+
+        rect(
+            x+4,
+            y+5,
+            30,
+            25,
+            "#b97743"
+        );
+
+        rect(
+            x+7,
+            y+4,
+            24,
+            27,
+            "#dfa35e"
+        );
+
+        rect(
+            x+10,
+            y+9,
+            4,
+            4,
+            "#704832"
+        );
+
+        rect(
+            x+25,
+            y+20,
+            4,
+            4,
+            "#704832"
+        );
+
+    }else if(type===1){
+
+        rect(
+            x+5,
+            y+5,
+            28,
+            26,
+            "#b86b4b"
+        );
+
+        rect(
+            x+7,
+            y+6,
+            24,
+            23,
+            "#e7a35f"
+        );
+
+        rect(
+            x+7,
+            y+6,
+            24,
+            10,
+            "#e9899e"
+        );
+
+        rect(
+            x+16,
+            y+12,
+            7,
+            8,
+            "#9b6848"
+        );
+
+    }else if(type===2){
+
+        rect(
+            x+8,
+            y+15,
+            23,
+            17,
+            "#b97749"
+        );
+
+        rect(
+            x+11,
+            y+18,
+            17,
+            16,
+            "#d99658"
+        );
+
+        rect(
+            x+7,
+            y+9,
+            25,
+            10,
+            "#e78099"
+        );
+
+        rect(
+            x+12,
+            y+4,
+            16,
+            9,
+            "#f0a1b1"
+        );
+
+    }else{
+
+        rect(
+            x+8,
+            y+8,
+            23,
+            21,
+            "#c44760"
+        );
+
+        rect(
+            x+5,
+            y+13,
+            29,
+            12,
+            "#da536b"
+        );
+
+        rect(
+            x+12,
+            y+3,
+            5,
+            7,
+            "#4d8243"
+        );
+
+        rect(
+            x+21,
+            y+3,
+            5,
+            7,
+            "#4d8243"
+        );
+
+    }
+
+    ctx.save();
+
+    ctx.font=
+        "bold 17px monospace";
+
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+
+    ctx.strokeStyle="#4b342c";
+    ctx.fillStyle="#fff6cf";
+    ctx.lineWidth=4;
+
+    ctx.strokeText(
+        letter,
+        x+19,
+        y+17
+    );
+
+    ctx.fillText(
+        letter,
+        x+19,
+        y+17
+    );
+
+    ctx.restore();
+
+}
+
+/* =========================================================
+   LETTER COLLISION
+========================================================= */
+
+function checkLetters(){
+
+    if(roundLocked)return;
+
+    const p=playerBox();
+
+    for(const l of letters){
+
+        if(
+            !l.active||
+            l.locked
+        ){
+            continue;
+        }
+
+        const b={
+
+            x:l.x+11,
+            y:l.y+10,
+            w:17,
+            h:18
+
+        };
+
+        if(hit(p,b)){
+
+            collectLetter(l);
+
+            break;
+
+        }
+
+    }
+
+}
+
+function collectLetter(l){
+
+    if(roundLocked)return;
+
+    const needed=
+        currentWord.english[index];
+
+    if(l.letter===needed){
+
+        /*
+           ปิดเฉพาะตัวที่เก็บ
+           ตัวซ้ำอื่นยังอยู่
+        */
+
+        l.active=false;
+
+        index++;
+        combo++;
+
+        const gained=
+            Math.round(
+                10*
+                combo*
+                modes[mode].multiplier
+            );
+
+        score+=gained;
+
+        scoreEl.textContent=score;
+
+        floatText(
+            "+"+gained,
+            l.x+18,
+            l.y
+        );
+
+        correctSound();
+
+        particlesBurst(
+            l.x+18,
+            l.y+17,
+            "#ffe58a",
+            12
+        );
+
+        updateAnswer();
+
+        if(
+            index>=
+            currentWord.english.length
+        ){
+
+            completeWord();
+
+        }else{
+
+            messageEl.textContent=
+                "Next: "+
+                currentWord.english[index];
+
+        }
+
+    }else{
+
+        l.locked=true;
+
+        combo=0;
+
+        wrongSound();
+
+        damage();
+
+        messageEl.textContent=
+            "Wrong! Find "+
+            needed;
+
+        waitUntilLeaveLetter(l);
+
+    }
+
+}
+
+function waitUntilLeaveLetter(letter){
+
+    const check=()=>{
+
+        if(!letter.active)return;
+
+        const p=playerBox();
+
+        const b={
+
+            x:letter.x+11,
+            y:letter.y+10,
+            w:17,
+            h:18
+
+        };
+
+        if(hit(p,b)){
+
+            requestAnimationFrame(check);
+
+        }else{
+
+            letter.locked=false;
+
+        }
+
+    };
+
+    requestAnimationFrame(check);
+
+}
+
+/* =========================================================
+   WORD COMPLETE
+========================================================= */
+
+function completeWord(){
+
+    roundLocked=true;
+
+    wordsCompleted++;
+
+    const bonus=
+        Math.round(
+            50*
+            modes[mode].multiplier
+        );
+
+    score+=bonus;
+
+    scoreEl.textContent=score;
+
+    wordCount.textContent=
+        "WORDS "+
+        wordsCompleted;
+
+    const text=
+        document.getElementById(
+            "completeText"
+        );
+
+    text.textContent=
+        "WORD COMPLETE! +"+
+        bonus;
+
+    text.classList.remove("show");
+
+    void text.offsetWidth;
+
+    text.classList.add("show");
+
+    completeSound();
+
+    particlesBurst(
+        player.x+16,
+        player.y+20,
+        "#f3a1b5",
+        25
+    );
+
+    setTimeout(()=>{
+
+        if(running){
+
+            newWord();
+
+        }
+
+    },800);
+
+}
+
+/* =========================================================
+   BUGS
+========================================================= */
+
+function makeBugs(){
+
+    bugs=[];
+
+    const config=modes[mode];
+
+    for(
+        let i=0;
+        i<config.bugs;
+        i++
+    ){
+
+        const p=
+            randomPosition(90);
+
+        const angle=
+            Math.random()*
+            Math.PI*2;
+
+        const speed=
+            config.bugSpeed+
+            Math.random()*7;
+
+        bugs.push({
+
+            x:p.x,
+            y:p.y,
+
+            dx:Math.cos(angle),
+            dy:Math.sin(angle),
+
+            speed:speed,
+            base:speed,
+
+            turn:
+                1+
+                Math.random()*2,
+
+            pause:0,
+
+            phase:
+                Math.random()*8
+
+        });
+
+    }
+
+}
+
+function updateBugs(dt){
+
+    const b=bounds();
+
+    bugs.forEach(bug=>{
+
+        if(bug.pause>0){
+
+            bug.pause-=dt;
+
+            return;
+
+        }
+
+        bug.turn-=dt;
+
+        if(bug.turn<=0){
+
+            if(Math.random()<.2){
+
+                bug.pause=
+                    .2+
+                    Math.random()*.5;
+
+            }
+
+            const angle=
+                Math.random()*
+                Math.PI*2;
+
+            bug.dx=Math.cos(angle);
+            bug.dy=Math.sin(angle);
+
+            bug.speed=bug.base;
+
+            bug.turn=
+                .8+
+                Math.random()*2;
+
+        }
+
+        bug.x+=
+            bug.dx*
+            bug.speed*
+            dt;
+
+        bug.y+=
+            bug.dy*
+            bug.speed*
+            dt;
+
+        if(bug.x<b.left){
+
+            bug.x=b.left;
+
+            bug.dx=
+                Math.abs(bug.dx);
+
+        }
+
+        if(
+            bug.x>
+            b.right-32
+        ){
+
+            bug.x=
+                b.right-32;
+
+            bug.dx=
+                -Math.abs(bug.dx);
+
+        }
+
+        if(bug.y<b.top){
+
+            bug.y=b.top;
+
+            bug.dy=
+                Math.abs(bug.dy);
+
+        }
+
+        if(
+            bug.y>
+            b.bottom-28
+        ){
+
+            bug.y=
+                b.bottom-28;
+
+            bug.dy=
+                -Math.abs(bug.dy);
+
+        }
+
+    });
+
+}
+
+function drawBugs(){
+
+    bugs.forEach(bug=>{
+
+        const x=bug.x;
+        const y=bug.y;
+
+        const step=
+            Math.floor(
+                worldTime*9+
+                bug.phase
+            )%2;
+
+        rect(
+            x+5,
+            y+20,
+            22,
+            5,
+            "rgba(40,55,35,.22)"
+        );
+
+        rect(
+            x+2,
+            y+10+step*2,
+            6,
+            3,
+            "#493837"
+        );
+
+        rect(
+            x+24,
+            y+10+(1-step)*2,
+            6,
+            3,
+            "#493837"
+        );
+
+        rect(
+            x+1,
+            y+17+(1-step)*2,
+            7,
+            3,
+            "#493837"
+        );
+
+        rect(
+            x+24,
+            y+17+step*2,
+            7,
+            3,
+            "#493837"
+        );
+
+        rect(
+            x+6,
+            y+5,
+            20,
+            17,
+            "#943f48"
+        );
+
+        rect(
+            x+8,
+            y+4,
+            16,
+            17,
+            "#d84e59"
+        );
+
+        rect(
+            x+15,
+            y+5,
+            2,
+            16,
+            "#6b3439"
+        );
+
+        rect(
+            x+10,
+            y+8,
+            4,
+            4,
+            "#56383b"
+        );
+
+        rect(
+            x+19,
+            y+8,
+            4,
+            4,
+            "#56383b"
+        );
+
+        rect(
+            x+11,
+            y+1,
+            11,
+            7,
+            "#493837"
+        );
+
+        rect(
+            x+13,
+            y+2,
+            2,
+            2,
+            "#fff1bb"
+        );
+
+        rect(
+            x+19,
+            y+2,
+            2,
+            2,
+            "#fff1bb"
+        );
+
+    });
+
+}
+
+function checkBugs(){
+
+    if(damageCooldown>0)return;
+
+    const p=playerBox();
+
+    for(const bug of bugs){
+
+        if(
+            hit(
+                p,
+                {
+                    x:bug.x+6,
+                    y:bug.y+7,
+                    w:21,
+                    h:17
+                }
+            )
+        ){
+
+            damage();
+
+            let dx=
+                bug.x-
+                player.x;
+
+            let dy=
+                bug.y-
+                player.y;
+
+            const length=
+                Math.hypot(dx,dy)||1;
+
+            bug.dx=
+                dx/length;
+
+            bug.dy=
+                dy/length;
+
+            bug.speed=
+                bug.base*1.8;
+
+            bug.turn=.7;
+
+            bugSound();
+
+            break;
+
+        }
+
+    }
+
+}
+
+/* =========================================================
+   DAMAGE
+========================================================= */
+
+function damage(){
+
+    if(damageCooldown>0)return;
+
+    damageCooldown=1;
+
+    if(shield){
+
+        shield=false;
+
+        shieldBadge.style.display=
+            "none";
+
+        floatText(
+            "BLOCK!",
+            player.x+16,
+            player.y
+        );
+
+        particlesBurst(
+            player.x+16,
+            player.y+20,
+            "#9be0ef",
+            12
+        );
+
+        return;
+
+    }
+
+    life--;
+
+    updateLife();
+
+    floatText(
+        "-1 ♥",
+        player.x+16,
+        player.y
+    );
+
+    particlesBurst(
+        player.x+16,
+        player.y+20,
+        "#e65b64",
+        10
+    );
+
+    if(life<=0){
+
+        running=false;
+
+        loseSound();
+
+        setTimeout(
+            finishGame,
+            500
+        );
+
+    }
+
+}
+
+/* =========================================================
+   POWER UPS
+========================================================= */
+
+function makePower(){
+
+    powers=
+        powers.filter(
+            p=>p.active
+        );
+
+    if(powers.length>=2)return;
+
+    const types=[
+        "heart",
+        "shield",
+        "magnet"
+    ];
+
+    const p=
+        randomPosition();
+
+    powers.push({
+
+        x:p.x,
+        y:p.y,
+
+        type:
+            types[
+                Math.floor(
+                    Math.random()*
+                    types.length
+                )
+            ],
+
+        active:true,
+
+        phase:
+            Math.random()*6
+
+    });
+
+}
+
+function drawPowers(){
+
+    powers.forEach(p=>{
+
+        if(!p.active)return;
+
+        const x=p.x;
+
+        const y=
+            p.y+
+            Math.sin(
+                worldTime*4+
+                p.phase
+            )*3;
+
+        rect(
+            x+3,
+            y+28,
+            25,
+            5,
+            "rgba(40,55,35,.2)"
+        );
+
+        if(p.type==="heart"){
+
+            rect(
+                x+6,
+                y+7,
+                7,
+                7,
+                "#dc4e59"
+            );
+
+            rect(
+                x+18,
+                y+7,
+                7,
+                7,
+                "#dc4e59"
+            );
+
+            rect(
+                x+3,
+                y+11,
+                25,
+                8,
+                "#e95c67"
+            );
+
+            rect(
+                x+7,
+                y+19,
+                17,
+                5,
+                "#e95c67"
+            );
+
+            rect(
+                x+11,
+                y+24,
+                9,
+                4,
+                "#d94855"
+            );
+
+        }else if(p.type==="shield"){
+
+            rect(
+                x+6,
+                y+3,
+                20,
+                20,
+                "#58a8c4"
+            );
+
+            rect(
+                x+9,
+                y+5,
+                14,
+                23,
+                "#79c5d8"
+            );
+
+            rect(
+                x+12,
+                y+8,
+                8,
+                14,
+                "#b7e8ed"
+            );
+
+        }else{
+
+            rect(
+                x+5,
+                y+5,
+                7,
+                19,
+                "#a25db5"
+            );
+
+            rect(
+                x+20,
+                y+5,
+                7,
+                19,
+                "#a25db5"
+            );
+
+            rect(
+                x+9,
+                y+20,
+                15,
+                7,
+                "#c27ad0"
+            );
+
+        }
+
+    });
+
+}
+
+function checkPowers(){
+
+    const pBox=playerBox();
+
+    powers.forEach(p=>{
+
+        if(!p.active)return;
+
+        if(
+            hit(
+                pBox,
+                {
+                    x:p.x+5,
+                    y:p.y+5,
+                    w:24,
+                    h:24
+                }
+            )
+        ){
+
+            p.active=false;
+
+            powerSound();
+
+            if(p.type==="heart"){
+
+                if(life<3){
+
+                    life++;
+
+                    updateLife();
+
+                    floatText(
+                        "+1 HEART",
+                        p.x,
+                        p.y
+                    );
+
+                }else{
+
+                    score+=30;
+
+                    scoreEl.textContent=
+                        score;
+
+                    floatText(
+                        "+30",
+                        p.x,
+                        p.y
+                    );
+
+                }
+
+            }else if(p.type==="shield"){
+
+                shield=true;
+
+                shieldBadge.style.display=
+                    "block";
+
+                floatText(
+                    "SHIELD!",
+                    p.x,
+                    p.y
+                );
+
+            }else{
+
+                magnetTimer=10;
+
+                magnetBadge.style.display=
+                    "block";
+
+                floatText(
+                    "MAGNET!",
+                    p.x,
+                    p.y
+                );
+
+            }
+
+        }
+
+    });
+
+}
+
+function updateMagnet(dt){
+
+    if(magnetTimer<=0)return;
+
+    magnetTimer-=dt;
+
+    if(magnetTimer<=0){
+
+        magnetTimer=0;
+
+        magnetBadge.style.display=
+            "none";
+
+        return;
+
+    }
+
+    if(
+        roundLocked||
+        !currentWord
+    ){
+        return;
+    }
+
+    const needed=
+        currentWord.english[index];
+
+    const candidates=
+        letters.filter(
+            l=>
+                l.active&&
+                l.letter===needed
+        );
+
+    if(candidates.length===0)return;
+
+    candidates.sort(
+        (a,b)=>
+            Math.hypot(
+                player.x-a.x,
+                player.y-a.y
+            )-
+            Math.hypot(
+                player.x-b.x,
+                player.y-b.y
+            )
+    );
+
+    const target=candidates[0];
+
+    const dx=
+        player.x+16.5-
+        (target.x+19.5);
+
+    const dy=
+        player.y+38-
+        (target.y+19);
+
+    const distance=
+        Math.hypot(dx,dy);
+
+    if(
+        distance<300&&
+        distance>0
+    ){
+
+        const step=
+            Math.min(distance,320*dt);
+
+        target.x+=
+            dx/distance*
+            step;
+
+        target.y+=
+            dy/distance*
+            step;
+
+        if(distance<=step){
+
+            target.x=player.x-3;
+            target.y=player.y+19;
+
+        }
+
+        const b=bounds();
+
+        target.x=
+            Math.max(
+                b.left,
+                Math.min(
+                    b.right-38,
+                    target.x
+                )
+            );
+
+        target.y=
+            Math.max(
+                b.top,
+                Math.min(
+                    b.bottom-35,
+                    target.y
+                )
+            );
+
+    }
+
+}
+
+/* =========================================================
+   PARTICLES
+========================================================= */
+
+function particlesBurst(
+    x,
+    y,
+    color,
+    count
+){
+
+    for(let i=0;i<count;i++){
+
+        particles.push({
+
+            x:x,
+            y:y,
+
+            vx:
+                (Math.random()-.5)*90,
+
+            vy:
+                (Math.random()-.7)*90,
+
+            life:
+                .45+
+                Math.random()*.35,
+
+            size:
+                2+
+                Math.floor(
+                    Math.random()*4
+                ),
+
+            color:color
+
+        });
+
+    }
+
+}
+
+function updateParticles(dt){
+
+    particles.forEach(p=>{
+
+        p.x+=p.vx*dt;
+        p.y+=p.vy*dt;
+
+        p.vy+=90*dt;
+
+        p.life-=dt;
+
+    });
+
+    particles=
+        particles.filter(
+            p=>p.life>0
+        );
+
+}
+
+function drawParticles(){
+
+    particles.forEach(p=>{
+
+        rect(
+            p.x,
+            p.y,
+            p.size,
+            p.size,
+            p.color
+        );
+
+    });
+
+}
+
+/* =========================================================
+   LIFE
+========================================================= */
+
+function updateLife(){
+
+    lifeEl.innerHTML="";
+
+    for(
+        let i=0;
+        i<life;
+        i++
+    ){
+
+        const h=
+            document.createElement(
+                "div"
+            );
+
+        h.className="heart";
+
+        h.innerHTML=
+            "<span></span>";
+
+        lifeEl.appendChild(h);
+
+    }
+
+}
+
+/* =========================================================
+   FLOAT TEXT
+========================================================= */
+
+function floatText(
+    text,
+    x,
+    y
+){
+
+    const el=
+        document.createElement(
+            "div"
+        );
+
+    el.className="floatText";
+
+    el.textContent=text;
+
+    el.style.left=x+"px";
+    el.style.top=y+"px";
+
+    gameEl.appendChild(el);
+
+    setTimeout(
+        ()=>el.remove(),
+        900
+    );
+
+}
+
+/* =========================================================
+   AUDIO
+========================================================= */
+
+let audioCtx=null;
+
+let musicVolume=
+    Number(
+        localStorage.getItem(
+            "SWG_music"
+        )
+    );
+
+let sfxVolume=
+    Number(
+        localStorage.getItem(
+            "SWG_sfx"
+        )
+    );
+
+if(!Number.isFinite(musicVolume)){
+    musicVolume=.5;
+}
+
+if(!Number.isFinite(sfxVolume)){
+    sfxVolume=.8;
+}
+
+musicSlider.value=
+    musicVolume*100;
+
+sfxSlider.value=
+    sfxVolume*100;
+
+musicValue.textContent=
+    Math.round(
+        musicVolume*100
+    )+"%";
+
+sfxValue.textContent=
+    Math.round(
+        sfxVolume*100
+    )+"%";
+
+function initAudio(){
+
+    if(!audioCtx){
+
+        const AudioClass=
+            window.AudioContext||
+            window.webkitAudioContext;
+
+        audioCtx=
+            new AudioClass();
+
+    }
+
+    if(
+        audioCtx.state===
+        "suspended"
+    ){
+
+        audioCtx.resume();
+
+    }
+
+}
+
+function tone(
+    frequency,
+    duration,
+    volume,
+    type="square",
+    music=false
+){
+
+    if(!audioCtx)return;
+
+    const master=
+        music
+        ?musicVolume
+        :sfxVolume;
+
+    if(master<=0)return;
+
+    const oscillator=
+        audioCtx.createOscillator();
+
+    const gain=
+        audioCtx.createGain();
+
+    oscillator.type=type;
+
+    oscillator.frequency.value=
+        frequency;
+
+    gain.gain.setValueAtTime(
+        Math.max(
+            .0001,
+            volume*master
+        ),
+        audioCtx.currentTime
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+        .0001,
+        audioCtx.currentTime+
+        duration
+    );
+
+    oscillator.connect(gain);
+    gain.connect(
+        audioCtx.destination
+    );
+
+    oscillator.start();
+
+    oscillator.stop(
+        audioCtx.currentTime+
+        duration
+    );
+
+}
+
+let lastFoot=0;
+
+function footSound(){
+
+    const now=
+        performance.now();
+
+    if(
+        now-lastFoot<130
+    ){
+        return;
+    }
+
+    lastFoot=now;
+
+    tone(
+        105,
+        .025,
+        .018
+    );
+
+}
+
+function correctSound(){
+
+    tone(
+        660,
+        .08,
+        .045
+    );
+
+    setTimeout(
+        ()=>tone(
+            880,
+            .1,
+            .04
+        ),
+        55
+    );
+
+}
+
+function wrongSound(){
+
+    tone(
+        140,
+        .18,
+        .045,
+        "sawtooth"
+    );
+
+}
+
+function bugSound(){
+
+    tone(
+        105,
+        .12,
+        .045
+    );
+
+}
+
+function powerSound(){
+
+    [
+        600,
+        800,
+        1000
+    ].forEach(
+        (n,i)=>{
+
+            setTimeout(
+                ()=>tone(
+                    n,
+                    .1,
+                    .035
+                ),
+                i*55
+            );
+
+        }
+    );
+
+}
+
+function completeSound(){
+
+    [
+        523,
+        659,
+        784
+    ].forEach(
+        (n,i)=>{
+
+            setTimeout(
+                ()=>tone(
+                    n,
+                    .15,
+                    .045
+                ),
+                i*75
+            );
+
+        }
+    );
+
+}
+
+function loseSound(){
+
+    [
+        280,
+        210,
+        140
+    ].forEach(
+        (n,i)=>{
+
+            setTimeout(
+                ()=>tone(
+                    n,
+                    .2,
+                    .045
+                ),
+                i*100
+            );
+
+        }
+    );
+
+}
+
+/* =========================================================
+   MUSIC
+========================================================= */
+
+const melody=[
+    392,440,523,440,
+    349,392,440,392,
+    329,349,392,440,
+    392,349,329,349
+];
+
+let melodyIndex=0;
+let musicTimer=null;
+
+function startMusic(){
+
+    clearInterval(
+        musicTimer
+    );
+
+    musicTimer=
+        setInterval(
+            ()=>{
+
+                if(
+                    running&&
+                    !paused&&
+                    musicVolume>0
+                ){
+
+                    tone(
+                        melody[
+                            melodyIndex%
+                            melody.length
+                        ],
+                        .25,
+                        .012,
+                        "triangle",
+                        true
+                    );
+
+                    melodyIndex++;
+
+                }
+
+            },
+            390
+        );
+
+}
+
+/* =========================================================
+   SETTINGS
+========================================================= */
+
+musicSlider.oninput=()=>{
+
+    musicVolume=
+        musicSlider.value/100;
+
+    musicValue.textContent=
+        musicSlider.value+"%";
+
+    localStorage.setItem(
+        "SWG_music",
+        musicVolume
+    );
+
+};
+
+sfxSlider.oninput=()=>{
+
+    sfxVolume=
+        sfxSlider.value/100;
+
+    sfxValue.textContent=
+        sfxSlider.value+"%";
+
+    localStorage.setItem(
+        "SWG_sfx",
+        sfxVolume
+    );
+
+    initAudio();
+
+    tone(
+        700,
+        .05,
+        .03
+    );
+
+};
+
+let settingsFromPause=false;
+
+settingsBtn.onclick=()=>{
+
+    settingsFromPause=false;
+
+    home.classList.add(
+        "hidden"
+    );
+
+    settingsScreen.classList.remove(
+        "hidden"
+    );
+
+};
+
+pauseSettings.onclick=()=>{
+
+    settingsFromPause=true;
+
+    pauseScreen.classList.add(
+        "hidden"
+    );
+
+    settingsScreen.classList.remove(
+        "hidden"
+    );
+
+};
+
+settingsBack.onclick=()=>{
+
+    settingsScreen.classList.add(
+        "hidden"
+    );
+
+    if(settingsFromPause){
+
+        pauseScreen.classList.remove(
+            "hidden"
+        );
+
+    }else{
+
+        home.classList.remove(
+            "hidden"
+        );
+
+    }
+
+};
+
+/* =========================================================
+   DIFFICULTY
+========================================================= */
+
+playBtn.onclick=()=>{
+
+    initAudio();
+
+    home.classList.add(
+        "hidden"
+    );
+
+    difficultyScreen.classList.remove(
+        "hidden"
+    );
+
+};
+
+difficultyBack.onclick=()=>{
+
+    difficultyScreen.classList.add(
+        "hidden"
+    );
+
+    home.classList.remove(
+        "hidden"
+    );
+
+};
+
+document
+.querySelectorAll(".diff")
+.forEach(btn=>{
+
+    btn.onclick=()=>{
+
+        mode=
+            btn.dataset.mode;
+
+        difficultyScreen.classList.add(
+            "hidden"
+        );
+
+        startGame();
+
+    };
+
+});
+
+/* =========================================================
+   START GAME
+========================================================= */
+
+async function requestLandscapeMode(){
+    if(!touchControlsEnabled)return;
+    try{if(document.documentElement.requestFullscreen && !document.fullscreenElement) await document.documentElement.requestFullscreen();}catch(e){}
+    try{if(screen.orientation && screen.orientation.lock) await screen.orientation.lock("landscape");}catch(e){}
+    resize();
+}
+
+function startGame(){
+
+    requestLandscapeMode();
+    initAudio();
+
+    score=0;
+    life=3;
+    combo=0;
+    wordsCompleted=0;
+
+    letters=[];
+    bugs=[];
+    powers=[];
+    particles=[];
+
+    shield=false;
+    magnetTimer=0;
+
+    damageCooldown=0;
+    roundLocked=false;
+
+    paused=false;
+    running=true;
+
+    const b=bounds();
+
+    player.x=
+        b.left+
+        (
+            b.right-b.left
+        )/2-
+        player.w/2;
+
+    player.y=
+        b.top+
+        (
+            b.bottom-b.top
+        )/2-
+        player.h/2;
+
+    player.direction="down";
+    player.frame=1;
+
+    scoreEl.textContent="0";
+
+    wordCount.textContent=
+        "WORDS 0";
+
+    modeText.textContent=
+        mode.toUpperCase()+
+        " ×"+
+        modes[mode].multiplier;
+
+    shieldBadge.style.display=
+        "none";
+
+    magnetBadge.style.display=
+        "none";
+
+    updateLife();
+
+    makeFlowers();
+    makeBugs();
+    newWord();
+
+    home.classList.add(
+        "hidden"
+    );
+
+    difficultyScreen.classList.add(
+        "hidden"
+    );
+
+    gameOver.classList.add(
+        "hidden"
+    );
+
+    pauseScreen.classList.add(
+        "hidden"
+    );
+
+    settingsScreen.classList.add(
+        "hidden"
+    );
+
+    startMusic();
+
+}
+
+/* =========================================================
+   PAUSE
+========================================================= */
+
+function togglePause(){
+
+    if(!running)return;
+
+    paused=!paused;
+
+    clearKeys();
+
+    pauseScreen.classList.toggle(
+        "hidden",
+        !paused
+    );
+
+}
+
+menuBtn.onclick=
+    togglePause;
+
+resumeBtn.onclick=()=>{
+
+    paused=false;
+
+    pauseScreen.classList.add(
+        "hidden"
+    );
+
+};
+
+/* =========================================================
+   GAME OVER
+========================================================= */
+
+function finishGame(){
+
+    running=false;
+    paused=false;
+
+    clearKeys();
+
+    if(
+        score>
+        best[mode]
+    ){
+
+        best[mode]=score;
+
+        localStorage.setItem(
+            "SWG_best_"+mode,
+            score
+        );
+
+    }
+
+    refreshBest();
+
+    finalScore.textContent=
+        score;
+
+    finalWords.textContent=
+        wordsCompleted;
+
+    finalMode.textContent=
+        mode.toUpperCase();
+
+    finalBest.textContent=
+        best[mode];
+
+    gameOver.classList.remove(
+        "hidden"
+    );
+
+}
+
+/* =========================================================
+   HOME
+========================================================= */
+
+function goHome(){
+
+    running=false;
+    paused=false;
+
+    clearKeys();
+
+    pauseScreen.classList.add(
+        "hidden"
+    );
+
+    gameOver.classList.add(
+        "hidden"
+    );
+
+    difficultyScreen.classList.add(
+        "hidden"
+    );
+
+    settingsScreen.classList.add(
+        "hidden"
+    );
+
+    home.classList.remove(
+        "hidden"
+    );
+
+}
+
+pauseHome.onclick=goHome;
+gameOverHome.onclick=goHome;
+
+againBtn.onclick=()=>{
+    startGame();
+};
+
+changeModeBtn.onclick=()=>{
+
+    gameOver.classList.add(
+        "hidden"
+    );
+
+    difficultyScreen.classList.remove(
+        "hidden"
+    );
+
+};
+
+/* =========================================================
+   FIRST TIME TUTORIAL
+========================================================= */
+
+const tutorialSteps=[
+
+    {
+        title:"เดินด้วยปุ่มหรือแตะหน้าจอ",
+
+        text:
+        "คอมพิวเตอร์ใช้ W A S D หรือปุ่มลูกศร ส่วนมือถือและแท็บเล็ตแตะปุ่มทิศทางมุมล่างซ้าย",
+
+        hint:
+        "กดค้างเพื่อเดิน และกดหลายทิศทางพร้อมกันได้",
+
+        scene:"move"
+
+    },
+
+    {
+        title:"ดูคำแปลแล้วสะกดคำ",
+
+        text:
+        "ดูคำภาษาไทยด้านบน แล้วเก็บตัวอักษรภาษาอังกฤษให้สะกดตรงคำตามลำดับ",
+
+        hint:
+        "คำแปลดึงจาก MyMemory API และเก็บไว้ใช้ซ้ำ; หากออฟไลน์จะใช้คำแปลสำรอง",
+
+        scene:"word"
+
+    },
+
+    {
+        title:"เก็บตัวอักษรให้ถูก",
+
+        text:
+        "เดินไปชนตัวอักษรที่ต้องการตามลำดับ เช่น C → A → T",
+
+        hint:
+        "ตัวอักษรที่ถูกจะถูกเก็บออกจากสนาม",
+
+        scene:"letters"
+
+    },
+
+    {
+        title:"ใช้ไอเท็มช่วยเล่น",
+
+        text:
+        "หัวใจเพิ่มพลังชีวิต (ถ้าเต็มจะได้คะแนน), เกราะบล็อกความเสียหายครั้งถัดไป และแม่เหล็กดูดตัวอักษรถัดไปเข้าหาตัว",
+
+        hint:
+        "เก็บไอเท็มโดยเดินชน แล้วแม่เหล็กจะช่วยเก็บตัวอักษรที่ถูกให้เอง",
+
+        scene:"powers"
+
+    },
+
+    {
+        title:"เอาตัวรอดและทำคะแนน",
+
+        text:
+        "ชนแมลงหรือเก็บตัวอักษรผิดจะเสียหัวใจ เมื่อสะกดครบจะได้คะแนนและเริ่มคำถัดไปทันที เล่นต่อเนื่องแบบ Endless ไม่มีมินิเกมแทรก",
+
+        hint:
+        "หัวใจหมดเมื่อไรเกมจบ — ทำคะแนนให้สูงที่สุด!",
+
+        scene:"complete"
+
+    }
+
+];
+
+let tutorialIndex=0;
+
+const tutorialTitle=
+    document.getElementById(
+        "tutorialTitle"
+    );
+
+const tutorialText=
+    document.getElementById(
+        "tutorialText"
+    );
+
+const tutorialHint=
+    document.getElementById(
+        "tutorialHint"
+    );
+
+const tutorialStepLabel=
+    document.getElementById(
+        "tutorialStepLabel"
+    );
+
+const tutorialScene=
+    document.getElementById(
+        "tutorialScene"
+    );
+
+const tutorialDots=
+    document.getElementById(
+        "tutorialDots"
+    );
+
+const tutorialBack=
+    document.getElementById(
+        "tutorialBack"
+    );
+
+const tutorialSkip=
+    document.getElementById(
+        "tutorialSkip"
+    );
+
+const tutorialNext=
+    document.getElementById(
+        "tutorialNext"
+    );
+
+function renderTutorial(){
+
+    const step=
+        tutorialSteps[
+            tutorialIndex
+        ];
+
+    tutorialTitle.textContent=
+        step.title;
+
+    tutorialText.textContent=
+        step.text;
+
+    tutorialHint.textContent=
+        step.hint;
+
+    tutorialStepLabel.textContent=
+        (
+            tutorialIndex+1
+        )+
+        " / "+
+        tutorialSteps.length;
+
+    tutorialScene.innerHTML="";
+
+    createTutorialScene(
+        step.scene
+    );
+
+    tutorialDots.innerHTML="";
+
+    tutorialSteps.forEach(
+        (_,i)=>{
+
+            const dot=
+                document.createElement(
+                    "div"
+                );
+
+            dot.className=
+                "tDot"+
+                (
+                    i===tutorialIndex
+                    ?" active"
+                    :""
+                );
+
+            tutorialDots.appendChild(
+                dot
+            );
+
+        }
+    );
+
+    tutorialBack.disabled=
+        tutorialIndex===0;
+
+    tutorialBack.style.opacity=
+        tutorialIndex===0
+        ?".45"
+        :"1";
+
+    if(
+        tutorialIndex===
+        tutorialSteps.length-1
+    ){
+
+        tutorialNext.textContent=
+            "เริ่มเล่น!";
+
+    }else{
+
+        tutorialNext.textContent=
+            "ถัดไป";
+
+    }
+
+}
+
+function createTutorialScene(type){
+
+    if(type==="move"){
+
+        tutorialScene.innerHTML=`
+
+            <div class="tPlayer">
+
+                <div class="hair"></div>
+                <div class="head"></div>
+
+                <div class="eye1"></div>
+                <div class="eye2"></div>
+
+                <div class="body"></div>
+
+                <div class="leg1"></div>
+                <div class="leg2"></div>
+
+            </div>
+
+            <div
+                class="tArrow"
+                style="left:28%;top:38%"
+            >←</div>
+
+            <div
+                class="tArrow"
+                style="left:72%;top:38%"
+            >→</div>
+
+            <div
+                class="tArrow"
+                style="left:50%;top:14%"
+            >↑</div>
+
+            <div
+                class="tArrow"
+                style="left:50%;top:67%"
+            >↓</div>
+
+        `;
+
+    }
+
+    if(type==="word"){
+
+        tutorialScene.innerHTML=`
+
+            <div class="tWordPanel">
+
+                <div class="tWordThai">
+                    แมว
+                </div>
+
+                <div class="tWordEng">
+                    C A T
+                </div>
+
+            </div>
+
+            <div
+                class="tPlayer"
+                style="left:22%;top:45%"
+            >
+
+                <div class="hair"></div>
+                <div class="head"></div>
+
+                <div class="eye1"></div>
+                <div class="eye2"></div>
+
+                <div class="body"></div>
+
+                <div class="leg1"></div>
+                <div class="leg2"></div>
+
+            </div>
+
+            <div class="tLetter a">
+                <span>C</span>
+            </div>
+
+            <div class="tLetter b">
+                <span>A</span>
+            </div>
+
+            <div class="tLetter c">
+                <span>T</span>
+            </div>
+
+        `;
+
+    }
+
+    if(type==="letters"){
+
+        tutorialScene.innerHTML=`
+
+            <div
+                class="tPlayer"
+                style="left:28%;top:51%"
+            >
+
+                <div class="hair"></div>
+                <div class="head"></div>
+
+                <div class="eye1"></div>
+                <div class="eye2"></div>
+
+                <div class="body"></div>
+
+                <div class="leg1"></div>
+                <div class="leg2"></div>
+
+            </div>
+
+            <div
+                class="tLetter"
+                style="left:51%;top:40%"
+            >
+                <span>C</span>
+            </div>
+
+            <div
+                class="tArrow"
+                style="left:43%;top:42%"
+            >→</div>
+
+            <div
+                class="tLetter"
+                style="right:12%;top:58%"
+            >
+                <span>A</span>
+            </div>
+
+            <div
+                class="tLetter"
+                style="left:67%;top:15%"
+            >
+                <span>T</span>
+            </div>
+
+        `;
+
+    }
+
+    if(type==="danger"){
+
+        tutorialScene.innerHTML=`
+
+            <div
+                class="tPlayer"
+                style="left:30%;top:55%"
+            >
+
+                <div class="hair"></div>
+                <div class="head"></div>
+
+                <div class="eye1"></div>
+                <div class="eye2"></div>
+
+                <div class="body"></div>
+
+                <div class="leg1"></div>
+                <div class="leg2"></div>
+
+            </div>
+
+            <div class="tBug">
+
+                <div class="body"></div>
+                <div class="stripe"></div>
+
+                <div class="leg l1"></div>
+                <div class="leg l2"></div>
+                <div class="leg r1"></div>
+                <div class="leg r2"></div>
+
+                <div class="head"></div>
+
+                <div class="eye e1"></div>
+                <div class="eye e2"></div>
+
+            </div>
+
+            <div class="tHeart">
+
+                <div class="tHeartCenter"></div>
+
+            </div>
+
+            <div
+                style="
+                    position:absolute;
+                    left:50%;
+                    top:73%;
+                    transform:translateX(-50%);
+                    color:#fff0c9;
+                    font-size:12px;
+                    font-weight:bold;
+                    text-shadow:2px 2px #513b31;
+                "
+            >
+                -1 HEART
+            </div>
+
+        `;
+
+    }
+
+    if(type==="powers"){
+
+        tutorialScene.innerHTML=`
+
+            <div class="tPowerups">
+                <div class="tPowerCard">
+                    <div class="tPowerIcon" style="color:#dc4d59">♥</div>
+                    หัวใจ
+                </div>
+                <div class="tPowerCard">
+                    <div class="tPowerIcon" style="color:#58a8c4">◆</div>
+                    เกราะ
+                </div>
+                <div class="tPowerCard">
+                    <div class="tPowerIcon" style="color:#a25db5">↗</div>
+                    แม่เหล็ก
+                </div>
+            </div>
+
+        `;
+
+    }
+
+    if(type==="complete"){
+
+        tutorialScene.innerHTML=`
+
+            <div
+                class="tWordPanel"
+                style="bottom:27px"
+            >
+
+                <div class="tWordThai">
+                    แมว ✓
+                </div>
+
+                <div
+                    class="tWordEng"
+                    style="color:#78a84f"
+                >
+                    C A T ✓
+                </div>
+
+            </div>
+
+            <div
+                style="
+                    position:absolute;
+                    left:50%;
+                    top:28%;
+                    transform:translateX(-50%);
+                    color:#fff0a4;
+                    font-size:22px;
+                    font-weight:bold;
+                    text-shadow:
+                        3px 0 #704b38,
+                        -3px 0 #704b38,
+                        0 3px #704b38,
+                        0 -3px #704b38;
+                "
+            >
+                WORD COMPLETE!
+            </div>
+
+            <div
+                style="
+                    position:absolute;
+                    left:50%;
+                    top:55%;
+                    transform:translateX(-50%);
+                    color:#fff6cf;
+                    font-size:13px;
+                    font-weight:bold;
+                    text-shadow:2px 2px #513b31;
+                "
+            >
+                NEXT WORD →
+            </div>
+
+        `;
+
+    }
+
+}
+
+function openTutorial(){
+
+    tutorialIndex=0;
+
+    renderTutorial();
+
+    tutorialOverlay.classList.remove(
+        "hidden"
+    );
+
+}
+
+function closeTutorial(){
+
+    tutorialOverlay.classList.add(
+        "hidden"
+    );
+
+    localStorage.setItem(
+        "SWG_tutorial_seen",
+        "1"
+    );
+
+}
+
+tutorialNext.onclick=()=>{
+
+    if(
+        tutorialIndex<
+        tutorialSteps.length-1
+    ){
+
+        tutorialIndex++;
+
+        renderTutorial();
+
+    }else{
+
+        closeTutorial();
+
+    }
+
+};
+
+tutorialBack.onclick=()=>{
+
+    if(tutorialIndex>0){
+
+        tutorialIndex--;
+
+        renderTutorial();
+
+    }
+
+};
+
+tutorialSkip.onclick=()=>{
+
+    closeTutorial();
+
+};
+
+helpBtn.onclick=()=>{
+
+    if(running){
+
+        paused=true;
+        clearKeys();
+
+    }
+
+    openTutorial();
+
+};
+
+homeTutorialBtn.onclick=()=>{
+
+    openTutorial();
+
+};
+
+/* =========================================================
+   UPDATE
+========================================================= */
+
+function update(dt){
+
+    worldTime+=dt;
+
+    if(
+        !running||
+        paused
+    ){
+        return;
+    }
+
+    updatePlayer(dt);
+
+    updateBugs(dt);
+
+    updateMagnet(dt);
+
+    updateParticles(dt);
+
+    checkLetters();
+
+    checkBugs();
+
+    checkPowers();
+
+    if(damageCooldown>0){
+
+        damageCooldown-=dt;
+
+    }
+
+}
+
+/* =========================================================
+   DRAW
+========================================================= */
+
+function draw(){
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    drawGrass();
+
+    drawFlowers();
+
+    drawFence();
+
+    drawLetters();
+
+    drawPowers();
+
+    drawBugs();
+
+    drawPlayer();
+
+    drawParticles();
+
+}
+
+/* =========================================================
+   LOOP
+========================================================= */
+
+let previous=
+    performance.now();
+
+function loop(now){
+
+    const dt=
+        Math.min(
+            .05,
+            (
+                now-
+                previous
+            )/1000
+        );
+
+    previous=now;
+
+    update(dt);
+
+    draw();
+
+    requestAnimationFrame(
+        loop
+    );
+
+}
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+resize();
+
+updateLife();
+
+requestAnimationFrame(
+    loop
+);
+
+
+</script>
+
+</body>
+</html>
