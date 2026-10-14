@@ -172,6 +172,21 @@ canvas{
     color:#92715a;
 }
 
+#message.apiError{
+    color:#a73535;
+}
+
+#retryWordBtn{
+    margin-top:3px;
+    padding:2px 6px;
+    border:1px solid #a73535;
+    background:#fff0c9;
+    color:#8d2d2d;
+    font-size:9px;
+    cursor:pointer;
+    pointer-events:auto;
+}
+
 #score{
     color:#b8653e;
     font-size:21px;
@@ -1210,6 +1225,7 @@ input[type=range]{
         </div>
 
         <div id="message">Find the letters</div>
+        <button id="retryWordBtn" class="hidden" type="button">ลองโหลดอีกครั้ง</button>
     </div>
 
     <div class="panel sideHud">
@@ -1288,7 +1304,7 @@ input[type=range]{
 
         <h2>SELECT DIFFICULTY</h2>
 
-        <p>เลือกระดับความยาก</p>
+        <p>คำศัพท์ระดับมัธยมปลายกว่า 1,500 คำ</p>
 
         <div class="difficultyGrid">
 
@@ -1298,7 +1314,7 @@ input[type=range]{
                     <span class="pixelLeaf"></span>
                 </span>
 
-                <strong>ง่าย</strong>
+                <strong>ง่าย · A1</strong>
 
                 <span class="diffBest">
                     BEST <b id="easyBest">0</b>
@@ -1312,7 +1328,7 @@ input[type=range]{
                     <span class="pixelFlower"></span>
                 </span>
 
-                <strong>ปานกลาง</strong>
+                <strong>ปานกลาง · A2</strong>
 
                 <span class="diffBest">
                     BEST <b id="normalBest">0</b>
@@ -1326,7 +1342,7 @@ input[type=range]{
                     <span class="pixelFlame"></span>
                 </span>
 
-                <strong>ยาก</strong>
+                <strong>ยาก · B1–B2</strong>
 
                 <span class="diffBest">
                     BEST <b id="hardBest">0</b>
@@ -1587,6 +1603,9 @@ const progressFill=
 const messageEl=
     document.getElementById("message");
 
+const retryWordBtn=
+    document.getElementById("retryWordBtn");
+
 const scoreEl=
     document.getElementById("score");
 
@@ -1688,1463 +1707,22 @@ const sfxValue=
    VOCABULARY
 ========================================================= */
 
-const offlineTranslations={
-
-cat:"แมว",
-dog:"สุนัข",
-fish:"ปลา",
-bird:"นก",
-duck:"เป็ด",
-frog:"กบ",
-pig:"หมู",
-cow:"วัว",
-bear:"หมี",
-lion:"สิงโต",
-wolf:"หมาป่า",
-goat:"แพะ",
-deer:"กวาง",
-horse:"ม้า",
-sheep:"แกะ",
-snake:"งู",
-shark:"ฉลาม",
-whale:"ปลาวาฬ",
-panda:"แพนด้า",
-tiger:"เสือ",
-rabbit:"กระต่าย",
-monkey:"ลิง",
-giraffe:"ยีราฟ",
-penguin:"เพนกวิน",
-dolphin:"โลมา",
-chicken:"ไก่",
-hamster:"หนูแฮมสเตอร์",
-elephant:"ช้าง",
-butterfly:"ผีเสื้อ",
-crocodile:"จระเข้",
-kangaroo:"จิงโจ้",
-
-sun:"ดวงอาทิตย์",
-moon:"พระจันทร์",
-star:"ดาว",
-rain:"ฝน",
-snow:"หิมะ",
-wind:"ลม",
-tree:"ต้นไม้",
-grass:"หญ้า",
-river:"แม่น้ำ",
-beach:"ชายหาด",
-ocean:"มหาสมุทร",
-cloud:"เมฆ",
-flower:"ดอกไม้",
-forest:"ป่า",
-island:"เกาะ",
-nature:"ธรรมชาติ",
-mountain:"ภูเขา",
-waterfall:"น้ำตก",
-environment:"สิ่งแวดล้อม",
-
-egg:"ไข่",
-rice:"ข้าว",
-milk:"นม",
-cake:"เค้ก",
-soup:"ซุป",
-meat:"เนื้อ",
-bread:"ขนมปัง",
-sugar:"น้ำตาล",
-honey:"น้ำผึ้ง",
-pizza:"พิซซ่า",
-pasta:"พาสต้า",
-apple:"แอปเปิล",
-grape:"องุ่น",
-mango:"มะม่วง",
-lemon:"มะนาว",
-melon:"แตงโม",
-banana:"กล้วย",
-orange:"ส้ม",
-cookie:"คุกกี้",
-cheese:"ชีส",
-coffee:"กาแฟ",
-noodle:"ก๋วยเตี๋ยว",
-breakfast:"อาหารเช้า",
-pineapple:"สับปะรด",
-chocolate:"ช็อกโกแลต",
-strawberry:"สตรอว์เบอร์รี",
-
-car:"รถ",
-bus:"รถบัส",
-boat:"เรือ",
-book:"หนังสือ",
-bed:"เตียง",
-door:"ประตู",
-desk:"โต๊ะเรียน",
-bag:"กระเป๋า",
-cup:"ถ้วย",
-pen:"ปากกา",
-phone:"โทรศัพท์",
-clock:"นาฬิกา",
-spoon:"ช้อน",
-plate:"จาน",
-bottle:"ขวด",
-chair:"เก้าอี้",
-shirt:"เสื้อ",
-skirt:"กระโปรง",
-shoes:"รองเท้า",
-window:"หน้าต่าง",
-umbrella:"ร่ม",
-bicycle:"จักรยาน",
-computer:"คอมพิวเตอร์",
-suitcase:"กระเป๋าเดินทาง",
-camera:"กล้องถ่ายรูป",
-pencil:"ดินสอ",
-notebook:"สมุด",
-backpack:"กระเป๋าสะพายหลัง",
-keyboard:"แป้นพิมพ์",
-television:"โทรทัศน์",
-
-home:"บ้าน",
-house:"บ้าน",
-city:"เมือง",
-road:"ถนน",
-school:"โรงเรียน",
-park:"สวนสาธารณะ",
-hotel:"โรงแรม",
-market:"ตลาด",
-airport:"สนามบิน",
-library:"ห้องสมุด",
-hospital:"โรงพยาบาล",
-kitchen:"ห้องครัว",
-bedroom:"ห้องนอน",
-bathroom:"ห้องน้ำ",
-village:"หมู่บ้าน",
-country:"ประเทศ",
-restaurant:"ร้านอาหาร",
-university:"มหาวิทยาลัย",
-supermarket:"ซูเปอร์มาร์เก็ต",
-
-eye:"ตา",
-ear:"หู",
-nose:"จมูก",
-hand:"มือ",
-foot:"เท้า",
-head:"ศีรษะ",
-mouth:"ปาก",
-face:"ใบหน้า",
-hair:"ผม",
-finger:"นิ้วมือ",
-shoulder:"ไหล่",
-stomach:"ท้อง",
-
-run:"วิ่ง",
-walk:"เดิน",
-read:"อ่าน",
-write:"เขียน",
-sleep:"นอน",
-drink:"ดื่ม",
-speak:"พูด",
-smile:"ยิ้ม",
-laugh:"หัวเราะ",
-dance:"เต้น",
-jump:"กระโดด",
-swim:"ว่ายน้ำ",
-listen:"ฟัง",
-study:"เรียน",
-travel:"เดินทาง",
-remember:"จดจำ",
-understand:"เข้าใจ",
-
-boy:"เด็กผู้ชาย",
-girl:"เด็กผู้หญิง",
-family:"ครอบครัว",
-friend:"เพื่อน",
-teacher:"ครู",
-student:"นักเรียน",
-doctor:"แพทย์",
-farmer:"เกษตรกร",
-police:"ตำรวจ",
-engineer:"วิศวกร",
-scientist:"นักวิทยาศาสตร์",
-language:"ภาษา",
-question:"คำถาม",
-answer:"คำตอบ",
-holiday:"วันหยุด",
-birthday:"วันเกิด",
-adventure:"การผจญภัย",
-education:"การศึกษา",
-technology:"เทคโนโลยี",
-beautiful:"สวยงาม",
-different:"แตกต่าง",
-dangerous:"อันตราย",
-wonderful:"มหัศจรรย์",
-interesting:"น่าสนใจ",
-happiness:"ความสุข",
-
-/* High-school and exam vocabulary */
-achieve:"บรรลุ",
-achievement:"ความสำเร็จ",
-advantage:"ข้อได้เปรียบ",
-affect:"ส่งผลกระทบ",
-although:"แม้ว่า",
-amount:"ปริมาณ",
-analyze:"วิเคราะห์",
-approach:"แนวทาง",
-attitude:"ทัศนคติ",
-available:"ที่มีอยู่",
-benefit:"ประโยชน์",
-behavior:"พฤติกรรม",
-challenge:"ความท้าทาย",
-communicate:"สื่อสาร",
-communication:"การสื่อสาร",
-community:"ชุมชน",
-compare:"เปรียบเทียบ",
-competition:"การแข่งขัน",
-concentrate:"มีสมาธิ",
-confident:"มั่นใจ",
-consider:"พิจารณา",
-contain:"ประกอบด้วย",
-contribute:"มีส่วนช่วย",
-convenient:"สะดวก",
-culture:"วัฒนธรรม",
-decision:"การตัดสินใจ",
-deliver:"ส่งมอบ",
-depend:"ขึ้นอยู่กับ",
-describe:"บรรยาย",
-design:"ออกแบบ",
-develop:"พัฒนา",
-development:"การพัฒนา",
-disadvantage:"ข้อเสียเปรียบ",
-discover:"ค้นพบ",
-educate:"ให้ความรู้",
-effect:"ผลกระทบ",
-efficient:"มีประสิทธิภาพ",
-encourage:"สนับสนุน",
-energy:"พลังงาน",
-essential:"จำเป็น",
-estimate:"ประมาณการ",
-evidence:"หลักฐาน",
-experience:"ประสบการณ์",
-experiment:"การทดลอง",
-explain:"อธิบาย",
-express:"แสดงออก",
-factor:"ปัจจัย",
-feature:"คุณลักษณะ",
-focus:"มุ่งเน้น",
-frequent:"บ่อยครั้ง",
-function:"หน้าที่",
-goal:"เป้าหมาย",
-government:"รัฐบาล",
-habit:"นิสัย",
-identify:"ระบุ",
-impact:"ผลกระทบ",
-improve:"ปรับปรุง",
-increase:"เพิ่มขึ้น",
-independent:"เป็นอิสระ",
-individual:"บุคคล",
-influence:"อิทธิพล",
-information:"ข้อมูล",
-instead:"แทนที่",
-instruction:"คำสั่ง",
-intelligent:"ฉลาด",
-interview:"สัมภาษณ์",
-involve:"เกี่ยวข้อง",
-issue:"ประเด็น",
-knowledge:"ความรู้",
-majority:"คนส่วนใหญ่",
-manage:"จัดการ",
-method:"วิธีการ",
-necessary:"จำเป็น",
-negative:"เชิงลบ",
-notice:"สังเกต",
-obvious:"ชัดเจน",
-opportunity:"โอกาส",
-organize:"จัดระเบียบ",
-original:"ดั้งเดิม",
-participate:"เข้าร่วม",
-particular:"เฉพาะเจาะจง",
-percent:"ร้อยละ",
-perform:"ปฏิบัติ",
-performance:"ผลการปฏิบัติงาน",
-period:"ช่วงเวลา",
-positive:"เชิงบวก",
-possible:"เป็นไปได้",
-practice:"ฝึกฝน",
-prepare:"เตรียมตัว",
-present:"นำเสนอ",
-prevent:"ป้องกัน",
-process:"กระบวนการ",
-produce:"ผลิต",
-provide:"จัดหาให้",
-purpose:"จุดประสงค์",
-quality:"คุณภาพ",
-reason:"เหตุผล",
-receive:"ได้รับ",
-reduce:"ลดลง",
-related:"เกี่ยวข้อง",
-remain:"คงอยู่",
-require:"ต้องการ",
-research:"การวิจัย",
-resource:"ทรัพยากร",
-respond:"ตอบสนอง",
-responsible:"รับผิดชอบ",
-result:"ผลลัพธ์",
-role:"บทบาท",
-section:"ส่วน",
-similar:"คล้ายกัน",
-society:"สังคม",
-solution:"วิธีแก้ปัญหา",
-specific:"เฉพาะเจาะจง",
-strategy:"กลยุทธ์",
-structure:"โครงสร้าง",
-suggest:"เสนอแนะ",
-support:"สนับสนุน",
-surface:"พื้นผิว",
-survey:"แบบสำรวจ",
-task:"งานที่ได้รับมอบหมาย",
-tradition:"ประเพณี",
-transfer:"ถ่ายโอน",
-trend:"แนวโน้ม",
-various:"หลากหลาย",
-volunteer:"อาสาสมัคร",
-
-// Additional high-school vocabulary (curated English–Thai meanings)
-able:"สามารถ",
-about:"เกี่ยวกับ",
-above:"ข้างบน",
-across:"ข้าม",
-act:"กระทำ",
-add:"เพิ่ม",
-afraid:"กลัว",
-after:"หลังจาก",
-again:"อีกครั้ง",
-age:"อายุ",
-ago:"ที่ผ่านมา",
-agree:"เห็นด้วย",
-air:"อากาศ",
-almost:"เกือบ",
-alone:"ตามลำพัง",
-along:"ไปตาม",
-already:"แล้ว",
-also:"เช่นกัน",
-always:"เสมอ",
-amazing:"น่าทึ่ง",
-among:"ท่ามกลาง",
-angry:"โกรธ",
-animal:"สัตว์",
-another:"อีกหนึ่ง",
-any:"ใดๆ",
-anyone:"ใครก็ตาม",
-anything:"อะไรก็ตาม",
-anyway:"อย่างไรก็ตาม",
-appear:"ปรากฏ",
-area:"พื้นที่",
-arm:"แขน",
-around:"รอบๆ",
-arrive:"มาถึง",
-art:"ศิลปะ",
-ask:"ถาม",
-asleep:"หลับ",
-aunt:"ป้า/น้า/อา",
-autumn:"ฤดูใบไม้ร่วง",
-away:"ออกไป",
-baby:"ทารก",
-back:"ด้านหลัง",
-bad:"แย่",
-balance:"สมดุล",
-ball:"ลูกบอล",
-bank:"ธนาคาร",
-bath:"การอาบน้ำ",
-beautifully:"อย่างสวยงาม",
-because:"เพราะว่า",
-become:"กลายเป็น",
-before:"ก่อน",
-begin:"เริ่ม",
-behind:"ข้างหลัง",
-believe:"เชื่อ",
-below:"ต่ำกว่า",
-best:"ดีที่สุด",
-better:"ดีกว่า",
-between:"ระหว่าง",
-big:"ใหญ่",
-bill:"ใบเรียกเก็บเงิน",
-black:"สีดำ",
-blue:"สีน้ำเงิน",
-body:"ร่างกาย",
-boring:"น่าเบื่อ",
-born:"เกิด",
-both:"ทั้งสอง",
-break:"แตก/หยุดพัก",
-bright:"สว่าง",
-bring:"นำมา",
-brother:"พี่ชาย/น้องชาย",
-busy:"ยุ่ง",
-buy:"ซื้อ",
-call:"โทร/เรียก",
-camp:"ค่าย",
-can:"สามารถ",
-capital:"เมืองหลวง",
-care:"ดูแล",
-careful:"ระมัดระวัง",
-carefully:"อย่างระมัดระวัง",
-carry:"ถือ/แบก",
-catch:"จับ",
-cause:"สาเหตุ",
-center:"ศูนย์กลาง",
-change:"เปลี่ยน",
-cheap:"ราคาถูก",
-check:"ตรวจสอบ",
-child:"เด็ก",
-choose:"เลือก",
-class:"ชั้นเรียน",
-clean:"สะอาด/ทำความสะอาด",
-clear:"ชัดเจน",
-clever:"ฉลาด",
-close:"ปิด/ใกล้",
-clothes:"เสื้อผ้า",
-color:"สี",
-come:"มา",
-common:"ทั่วไป",
-cook:"ทำอาหาร",
-cool:"เย็น/เจ๋ง",
-corner:"มุม",
-correct:"ถูกต้อง",
-cost:"ราคา/มีราคา",
-course:"หลักสูตร",
-cover:"ปกคลุม",
-cry:"ร้องไห้",
-cut:"ตัด",
-daily:"ทุกวัน",
-dark:"มืด",
-date:"วันที่",
-daughter:"ลูกสาว",
-day:"วัน",
-dead:"ตาย",
-decide:"ตัดสินใจ",
-deep:"ลึก",
-difficult:"ยาก",
-dinner:"อาหารเย็น",
-dirty:"สกปรก",
-early:"แต่เนิ่นๆ",
-east:"ทิศตะวันออก",
-easy:"ง่าย",
-eat:"กิน",
-enjoy:"เพลิดเพลิน",
-enough:"เพียงพอ",
-even:"แม้แต่",
-evening:"ตอนเย็น",
-every:"ทุกๆ",
-everyone:"ทุกคน",
-everything:"ทุกสิ่ง",
-example:"ตัวอย่าง",
-excited:"ตื่นเต้น",
-expensive:"แพง",
-fact:"ข้อเท็จจริง",
-fall:"ตก/ฤดูใบไม้ร่วง",
-false:"เท็จ",
-fast:"เร็ว",
-father:"พ่อ",
-feel:"รู้สึก",
-few:"น้อย",
-find:"ค้นพบ",
-fine:"สบายดี/ดี",
-finish:"เสร็จสิ้น",
-first:"แรก",
-food:"อาหาร",
-forget:"ลืม",
-free:"ฟรี/อิสระ",
-fresh:"สด",
-full:"เต็ม",
-fun:"ความสนุก",
-funny:"ตลก",
-future:"อนาคต",
-game:"เกม",
-garden:"สวน",
-get:"ได้รับ",
-give:"ให้",
-glad:"ยินดี",
-glass:"แก้ว",
-go:"ไป",
-good:"ดี",
-goodbye:"ลาก่อน",
-great:"ยอดเยี่ยม",
-green:"สีเขียว",
-ground:"พื้นดิน",
-group:"กลุ่ม",
-grow:"เติบโต",
-guess:"เดา",
-guest:"แขก",
-guide:"แนะนำ/มัคคุเทศก์",
-half:"ครึ่ง",
-happen:"เกิดขึ้น",
-happy:"มีความสุข",
-hard:"ยาก/แข็ง",
-healthy:"สุขภาพดี",
-hear:"ได้ยิน",
-hello:"สวัสดี",
-help:"ช่วยเหลือ",
-here:"ที่นี่",
-high:"สูง",
-history:"ประวัติศาสตร์",
-hold:"ถือ",
-hope:"หวัง",
-hot:"ร้อน",
-hour:"ชั่วโมง",
-hungry:"หิว",
-hurt:"เจ็บ",
-important:"สำคัญ",
-inside:"ข้างใน",
-job:"งาน",
-join:"เข้าร่วม",
-keep:"เก็บ/รักษา",
-kind:"ใจดี/ชนิด",
-know:"รู้",
-large:"ใหญ่",
-late:"สาย",
-later:"ภายหลัง",
-learn:"เรียนรู้",
-leave:"ออกจาก",
-left:"ซ้าย",
-less:"น้อยกว่า",
-letter:"จดหมาย/ตัวอักษร",
-life:"ชีวิต",
-light:"แสง/เบา",
-like:"ชอบ/เหมือน",
-little:"เล็กน้อย",
-live:"อาศัยอยู่",
-long:"ยาว",
-look:"มอง",
-love:"รัก",
-low:"ต่ำ",
-lucky:"โชคดี",
-make:"ทำ/สร้าง",
-many:"มากมาย",
-map:"แผนที่",
-meet:"พบ",
-member:"สมาชิก",
-middle:"ตรงกลาง",
-minute:"นาที",
-miss:"คิดถึง/พลาด",
-modern:"ทันสมัย",
-money:"เงิน",
-morning:"ตอนเช้า",
-move:"เคลื่อนย้าย",
-much:"มาก",
-music:"ดนตรี",
-name:"ชื่อ",
-near:"ใกล้",
-need:"ต้องการ",
-never:"ไม่เคย",
-new:"ใหม่",
-news:"ข่าว",
-next:"ถัดไป",
-nice:"ดี/น่ารัก",
-night:"กลางคืน",
-north:"ทิศเหนือ",
-often:"บ่อยๆ",
-old:"เก่า/แก่",
-once:"ครั้งหนึ่ง",
-one:"หนึ่ง",
-open:"เปิด",
-outside:"ข้างนอก",
-parent:"ผู้ปกครอง",
-party:"งานเลี้ยง",
-pay:"จ่าย",
-people:"ผู้คน",
-person:"บุคคล",
-place:"สถานที่",
-plan:"วางแผน",
-play:"เล่น",
-please:"กรุณา",
-poor:"ยากจน/แย่",
-popular:"เป็นที่นิยม",
-pretty:"สวย/ค่อนข้าง",
-problem:"ปัญหา",
-put:"วาง",
-quick:"รวดเร็ว",
-quiet:"เงียบ",
-quite:"ค่อนข้าง",
-rainy:"มีฝนตก",
-ready:"พร้อม",
-real:"จริง",
-really:"จริงๆ",
-right:"ถูกต้อง/ขวา",
-room:"ห้อง",
-same:"เหมือนกัน",
-save:"ช่วย/บันทึก",
-say:"พูด",
-sea:"ทะเล",
-season:"ฤดูกาล",
-second:"ที่สอง/วินาที",
-see:"เห็น",
-sell:"ขาย",
-send:"ส่ง",
-short:"สั้น",
-show:"แสดง",
-sick:"ป่วย",
-side:"ด้านข้าง",
-simple:"เรียบง่าย",
-since:"ตั้งแต่",
-sing:"ร้องเพลง",
-sister:"พี่สาว/น้องสาว",
-sit:"นั่ง",
-small:"เล็ก",
-smart:"ฉลาด",
-some:"บางส่วน",
-someone:"ใครบางคน",
-something:"บางสิ่ง",
-sometimes:"บางครั้ง",
-soon:"เร็วๆ นี้",
-south:"ทิศใต้",
-special:"พิเศษ",
-start:"เริ่มต้น",
-stay:"พัก/อยู่",
-still:"ยังคง",
-stop:"หยุด",
-strong:"แข็งแรง",
-such:"เช่นนั้น",
-sure:"แน่ใจ",
-sweet:"หวาน",
-take:"เอา/พา",
-talk:"พูดคุย",
-tall:"สูง",
-teach:"สอน",
-tell:"บอก",
-thank:"ขอบคุณ",
-there:"ที่นั่น",
-thing:"สิ่งของ",
-think:"คิด",
-thirsty:"กระหายน้ำ",
-today:"วันนี้",
-together:"ด้วยกัน",
-tomorrow:"พรุ่งนี้",
-tonight:"คืนนี้",
-too:"เกินไป/เช่นกัน",
-town:"เมืองเล็ก",
-try:"พยายาม",
-turn:"เลี้ยว/หมุน",
-under:"ใต้",
-until:"จนกระทั่ง",
-use:"ใช้",
-usual:"ตามปกติ",
-visit:"เยี่ยมชม",
-wait:"รอ",
-wake:"ตื่น",
-warm:"อบอุ่น",
-wash:"ล้าง",
-watch:"ดู",
-water:"น้ำ",
-way:"ทาง/วิธี",
-wear:"สวมใส่",
-weather:"สภาพอากาศ",
-week:"สัปดาห์",
-welcome:"ยินดีต้อนรับ",
-well:"ดี/อย่างดี",
-west:"ทิศตะวันตก",
-white:"สีขาว",
-whole:"ทั้งหมด",
-wide:"กว้าง",
-wife:"ภรรยา",
-win:"ชนะ",
-winter:"ฤดูหนาว",
-without:"ปราศจาก",
-woman:"ผู้หญิง",
-wonder:"สงสัย",
-work:"ทำงาน",
-world:"โลก",
-worry:"กังวล",
-wrong:"ผิด",
-year:"ปี",
-yellow:"สีเหลือง",
-young:"อายุน้อย",
-ability:"ความสามารถ",
-abroad:"ต่างประเทศ",
-accept:"ยอมรับ",
-accident:"อุบัติเหตุ",
-according:"ตามที่",
-account:"บัญชี/คำอธิบาย",
-active:"กระตือรือร้น",
-actually:"ที่จริงแล้ว",
-adult:"ผู้ใหญ่",
-advertise:"โฆษณา",
-advice:"คำแนะนำ",
-advise:"แนะนำ",
-afford:"สามารถจ่ายได้",
-afterward:"หลังจากนั้น",
-against:"ต่อต้าน/กับ",
-agency:"หน่วยงาน",
-agent:"ตัวแทน",
-agreement:"ข้อตกลง",
-ahead:"ข้างหน้า",
-allow:"อนุญาต",
-amaze:"ทำให้ประหลาดใจ",
-ancient:"โบราณ",
-announce:"ประกาศ",
-announcement:"ประกาศ",
-annual:"ประจำปี",
-anxious:"วิตกกังวล",
-apologize:"ขอโทษ",
-application:"ใบสมัคร/การประยุกต์ใช้",
-appointment:"การนัดหมาย",
-appreciate:"ซาบซึ้ง/เห็นคุณค่า",
-appropriate:"เหมาะสม",
-approve:"อนุมัติ",
-argument:"การโต้เถียง/เหตุผล",
-arrangement:"การจัดเตรียม",
-article:"บทความ",
-artist:"ศิลปิน",
-ashamed:"ละอายใจ",
-aspect:"แง่มุม",
-assist:"ช่วยเหลือ",
-assistant:"ผู้ช่วย",
-attention:"ความสนใจ",
-attract:"ดึงดูด",
-audience:"ผู้ชม",
-author:"ผู้เขียน",
-average:"ค่าเฉลี่ย",
-avoid:"หลีกเลี่ยง",
-award:"รางวัล",
-aware:"ตระหนัก",
-background:"ภูมิหลัง",
-basic:"พื้นฐาน",
-battle:"การต่อสู้",
-belong:"เป็นของ",
-birth:"การเกิด",
-blame:"ตำหนิ",
-blood:"เลือด",
-board:"คณะกรรมการ/กระดาน",
-borrow:"ยืม",
-brave:"กล้าหาญ",
-breath:"ลมหายใจ",
-breathe:"หายใจ",
-career:"อาชีพ",
-celebrate:"เฉลิมฉลอง",
-celebration:"การเฉลิมฉลอง",
-certain:"แน่นอน",
-certainly:"อย่างแน่นอน",
-chance:"โอกาส",
-character:"ตัวละคร/ลักษณะนิสัย",
-charge:"เรียกเก็บเงิน/กล่าวหา",
-choice:"ทางเลือก",
-citizen:"พลเมือง",
-claim:"อ้าง",
-classic:"คลาสสิก",
-climate:"ภูมิอากาศ",
-coast:"ชายฝั่ง",
-comfortable:"สะดวกสบาย",
-comment:"ความคิดเห็น",
-commercial:"เชิงพาณิชย์",
-complain:"ร้องเรียน",
-complaint:"ข้อร้องเรียน",
-complete:"ทำให้เสร็จ/สมบูรณ์",
-condition:"เงื่อนไข/สภาพ",
-confuse:"ทำให้สับสน",
-confused:"สับสน",
-connection:"ความเชื่อมโยง",
-contact:"ติดต่อ",
-content:"เนื้อหา",
-continue:"ดำเนินต่อ",
-control:"ควบคุม",
-conversation:"การสนทนา",
-convince:"โน้มน้าว",
-cooperate:"ร่วมมือ",
-copy:"สำเนา/คัดลอก",
-creative:"สร้างสรรค์",
-crime:"อาชญากรรม",
-criminal:"อาชญากร",
-crowd:"ฝูงชน",
-customer:"ลูกค้า",
-damage:"ความเสียหาย",
-danger:"อันตราย",
-deal:"จัดการ/ข้อตกลง",
-debate:"การอภิปราย",
-debt:"หนี้",
-decrease:"ลดลง",
-delivery:"การจัดส่ง",
-demand:"ความต้องการ",
-deny:"ปฏิเสธ",
-department:"แผนก/กรม",
-designer:"นักออกแบบ",
-detail:"รายละเอียด",
-determine:"กำหนด/ตัดสินใจ",
-device:"อุปกรณ์",
-difference:"ความแตกต่าง",
-direction:"ทิศทาง/คำสั่ง",
-disagree:"ไม่เห็นด้วย",
-disappear:"หายไป",
-disappoint:"ทำให้ผิดหวัง",
-disaster:"ภัยพิบัติ",
-discount:"ส่วนลด",
-discuss:"อภิปราย",
-discussion:"การอภิปราย",
-disease:"โรค",
-distance:"ระยะทาง",
-district:"เขต",
-divide:"แบ่ง",
-document:"เอกสาร",
-earn:"หาเงิน",
-earthquake:"แผ่นดินไหว",
-effort:"ความพยายาม",
-either:"อย่างใดอย่างหนึ่ง",
-elderly:"ผู้สูงอายุ",
-electric:"เกี่ยวกับไฟฟ้า",
-electricity:"ไฟฟ้า",
-emergency:"เหตุฉุกเฉิน",
-emotion:"อารมณ์",
-employ:"จ้างงาน",
-employee:"ลูกจ้าง",
-employer:"นายจ้าง",
-employment:"การจ้างงาน",
-empty:"ว่างเปล่า",
-engine:"เครื่องยนต์",
-entertain:"ให้ความบันเทิง",
-entertainment:"ความบันเทิง",
-entrance:"ทางเข้า",
-equipment:"อุปกรณ์",
-error:"ข้อผิดพลาด",
-especially:"โดยเฉพาะ",
-event:"เหตุการณ์",
-eventually:"ในที่สุด",
-exact:"แน่นอน/ตรงเป๊ะ",
-excellent:"ยอดเยี่ยม",
-exchange:"แลกเปลี่ยน",
-exist:"มีอยู่",
-expect:"คาดหวัง",
-expense:"ค่าใช้จ่าย",
-expression:"การแสดงออก/สำนวน",
-extra:"เพิ่มเติม",
-failure:"ความล้มเหลว",
-fair:"ยุติธรรม/งานแสดง",
-familiar:"คุ้นเคย",
-famous:"มีชื่อเสียง",
-fashion:"แฟชั่น",
-fault:"ความผิด",
-festival:"เทศกาล",
-flight:"เที่ยวบิน",
-foreign:"ต่างประเทศ",
-form:"แบบฟอร์ม/รูปแบบ",
-formal:"เป็นทางการ",
-fortunately:"โชคดีที่",
-freedom:"อิสรภาพ",
-friendship:"มิตรภาพ",
-furniture:"เฟอร์นิเจอร์",
-generation:"รุ่น/ชั่วอายุคน",
-global:"ทั่วโลก",
-habitual:"เป็นนิสัย",
-harm:"อันตราย/ทำร้าย",
-harmful:"เป็นอันตราย",
-health:"สุขภาพ",
-healthcare:"การดูแลสุขภาพ",
-height:"ความสูง",
-helpful:"มีประโยชน์",
-honest:"ซื่อสัตย์",
-honesty:"ความซื่อสัตย์",
-however:"อย่างไรก็ตาม",
-human:"มนุษย์",
-humanity:"มนุษยชาติ",
-imagine:"จินตนาการ",
-immediately:"ทันที",
-improvement:"การพัฒนา",
-include:"รวมถึง",
-incredible:"เหลือเชื่อ",
-indicate:"บ่งชี้",
-industry:"อุตสาหกรรม",
-inform:"แจ้งให้ทราบ",
-injure:"ทำให้บาดเจ็บ",
-injury:"การบาดเจ็บ",
-institute:"สถาบัน",
-instrument:"เครื่องมือ/เครื่องดนตรี",
-interest:"ความสนใจ",
-international:"ระหว่างประเทศ",
-introduce:"แนะนำ",
-introduction:"บทนำ",
-invent:"ประดิษฐ์",
-invention:"สิ่งประดิษฐ์",
-invitation:"คำเชิญ",
-invite:"เชิญ",
-item:"รายการ/สิ่งของ",
-journey:"การเดินทาง",
-judge:"ตัดสิน/ผู้พิพากษา",
-judgment:"การตัดสิน",
-justice:"ความยุติธรรม",
-lack:"ขาดแคลน",
-law:"กฎหมาย",
-leader:"ผู้นำ",
-leadership:"ภาวะผู้นำ",
-legal:"ถูกกฎหมาย",
-level:"ระดับ",
-local:"ท้องถิ่น",
-location:"สถานที่ตั้ง",
-management:"การจัดการ",
-manager:"ผู้จัดการ",
-material:"วัสดุ/เนื้อหา",
-measure:"วัด/มาตรการ",
-measurement:"การวัด",
-medical:"ทางการแพทย์",
-medicine:"ยา/การแพทย์",
-memory:"ความทรงจำ",
-mention:"กล่าวถึง",
-message:"ข้อความ",
-mistake:"ข้อผิดพลาด",
-mixture:"ส่วนผสม",
-natural:"ตามธรรมชาติ",
-nearly:"เกือบจะ",
-neighborhood:"ละแวกบ้าน",
-normal:"ปกติ",
-objective:"วัตถุประสงค์",
-obtain:"ได้รับ",
-occasion:"โอกาส/เหตุการณ์",
-occur:"เกิดขึ้น",
-official:"เจ้าหน้าที่/เป็นทางการ",
-opinion:"ความคิดเห็น",
-opposite:"ตรงข้าม",
-option:"ตัวเลือก",
-ordinary:"ธรรมดา",
-otherwise:"มิฉะนั้น",
-pain:"ความเจ็บปวด",
-painful:"เจ็บปวด",
-passenger:"ผู้โดยสาร",
-patient:"ผู้ป่วย/อดทน",
-peace:"สันติภาพ",
-perfect:"สมบูรณ์แบบ",
-permission:"การอนุญาต",
-permit:"อนุญาต",
-physical:"ทางกายภาพ",
-pleasure:"ความยินดี",
-pollution:"มลพิษ",
-population:"ประชากร",
-position:"ตำแหน่ง",
-pressure:"ความกดดัน",
-price:"ราคา",
-private:"ส่วนตัว",
-probably:"น่าจะ",
-product:"ผลิตภัณฑ์",
-production:"การผลิต",
-profession:"วิชาชีพ",
-professional:"มืออาชีพ",
-profit:"กำไร",
-progress:"ความก้าวหน้า",
-project:"โครงการ",
-promise:"สัญญา",
-proper:"เหมาะสม",
-protect:"ปกป้อง",
-protection:"การป้องกัน",
-prove:"พิสูจน์",
-public:"สาธารณะ",
-publish:"เผยแพร่",
-quantity:"ปริมาณ",
-quarter:"หนึ่งในสี่/ไตรมาส",
-questionnaire:"แบบสอบถาม",
-raise:"ยก/เพิ่ม",
-range:"ช่วง/ขอบเขต",
-rate:"อัตรา",
-realize:"ตระหนัก",
-recent:"เมื่อไม่นานมานี้",
-recently:"เมื่อเร็วๆ นี้",
-recommend:"แนะนำ",
-record:"บันทึก",
-recover:"ฟื้นตัว",
-recycle:"นำกลับมาใช้ใหม่",
-relationship:"ความสัมพันธ์",
-remind:"เตือน",
-remove:"นำออก",
-repair:"ซ่อมแซม",
-replace:"แทนที่",
-reply:"ตอบกลับ",
-report:"รายงาน",
-reporter:"ผู้สื่อข่าว",
-represent:"เป็นตัวแทน",
-request:"ร้องขอ",
-respect:"เคารพ",
-return:"กลับ/คืน",
-review:"ทบทวน/รีวิว",
-risk:"ความเสี่ยง",
-rule:"กฎ",
-safety:"ความปลอดภัย",
-salary:"เงินเดือน",
-schedule:"กำหนดเวลา",
-science:"วิทยาศาสตร์",
-scientific:"ทางวิทยาศาสตร์",
-search:"ค้นหา",
-secret:"ความลับ",
-security:"ความปลอดภัย",
-select:"เลือก",
-selection:"การคัดเลือก",
-serious:"จริงจัง/ร้ายแรง",
-service:"บริการ",
-several:"หลาย",
-skill:"ทักษะ",
-social:"ทางสังคม",
-source:"แหล่งที่มา",
-speech:"คำพูด/สุนทรพจน์",
-standard:"มาตรฐาน",
-statement:"คำแถลง",
-status:"สถานะ",
-successful:"ประสบความสำเร็จ",
-successfully:"อย่างสำเร็จ",
-suddenly:"ทันใดนั้น",
-suggestion:"ข้อเสนอแนะ",
-suitable:"เหมาะสม",
-supply:"จัดหา/อุปทาน",
-system:"ระบบ",
-team:"ทีม",
-term:"คำศัพท์/ภาคเรียน",
-therefore:"ดังนั้น",
-though:"แม้ว่า",
-thought:"ความคิด",
-throughout:"ตลอดทั่ว",
-tourism:"การท่องเที่ยว",
-tourist:"นักท่องเที่ยว",
-traffic:"การจราจร",
-training:"การฝึกอบรม",
-treatment:"การรักษา/การปฏิบัติ",
-trouble:"ปัญหา",
-truth:"ความจริง",
-typical:"โดยทั่วไป",
-understandable:"เข้าใจได้",
-unfortunately:"น่าเสียดายที่",
-unique:"มีเอกลักษณ์",
-unless:"เว้นแต่",
-unusual:"ผิดปกติ",
-useful:"มีประโยชน์",
-user:"ผู้ใช้",
-value:"คุณค่า/มูลค่า",
-vehicle:"ยานพาหนะ",
-victim:"เหยื่อ",
-view:"มุมมอง/ทิวทัศน์",
-violence:"ความรุนแรง",
-violent:"รุนแรง",
-visible:"มองเห็นได้",
-waste:"ของเสีย/สิ้นเปลือง",
-website:"เว็บไซต์",
-whether:"หรือไม่",
-wholeheartedly:"อย่างเต็มใจ",
-wildlife:"สัตว์ป่า",
-wise:"ฉลาด/มีปัญญา",
-wisely:"อย่างชาญฉลาด",
-worker:"คนงาน",
-writer:"นักเขียน",
-abstract:"นามธรรม",
-abundant:"อุดมสมบูรณ์",
-accurate:"แม่นยำ",
-acknowledge:"ยอมรับ/รับทราบ",
-acquire:"ได้มา",
-adapt:"ปรับตัว",
-adequate:"เพียงพอ",
-adjacent:"ติดกัน",
-advocate:"สนับสนุน/ผู้สนับสนุน",
-aggregate:"รวบรวม/ผลรวม",
-ambiguous:"กำกวม",
-ambition:"ความทะเยอทะยาน",
-analogy:"การเปรียบเทียบ",
-analytical:"เชิงวิเคราะห์",
-anticipate:"คาดการณ์",
-apparent:"เห็นได้ชัด",
-arbitrary:"ตามอำเภอใจ",
-assess:"ประเมิน",
-assessment:"การประเมิน",
-assign:"มอบหมาย",
-assumption:"ข้อสันนิษฐาน",
-assure:"รับรอง/ทำให้มั่นใจ",
-attain:"บรรลุ",
-attribute:"คุณลักษณะ/ระบุว่าเป็นผลจาก",
-authentic:"แท้จริง",
-autonomous:"ปกครองตนเอง/อิสระ",
-bias:"อคติ",
-capable:"มีความสามารถ",
-capacity:"ความจุ/ความสามารถ",
-cease:"ยุติ",
-circumstance:"สถานการณ์",
-cite:"อ้างอิง",
-coherent:"สอดคล้องเป็นเหตุเป็นผล",
-coincide:"เกิดขึ้นพร้อมกัน",
-collapse:"พังทลาย",
-colleague:"เพื่อนร่วมงาน",
-commence:"เริ่มต้น",
-compensate:"ชดเชย",
-compile:"รวบรวม",
-complement:"เติมเต็ม",
-complexity:"ความซับซ้อน",
-component:"องค์ประกอบ",
-comprehensive:"ครอบคลุม",
-comprise:"ประกอบด้วย",
-conceive:"คิด/จินตนาการ",
-conclude:"สรุป",
-conclusion:"บทสรุป",
-conduct:"ดำเนินการ",
-confer:"ปรึกษา/มอบให้",
-conflict:"ความขัดแย้ง",
-conform:"ปฏิบัติตาม",
-consent:"ความยินยอม",
-consequent:"ที่เป็นผลตามมา",
-consequently:"ดังนั้น/เป็นผลให้",
-consistent:"สม่ำเสมอ/สอดคล้อง",
-constitute:"ประกอบเป็น",
-constraint:"ข้อจำกัด",
-consult:"ปรึกษา",
-consume:"บริโภค",
-contemporary:"ร่วมสมัย",
-contradict:"ขัดแย้ง",
-contrary:"ตรงกันข้าม",
-controversial:"เป็นที่ถกเถียง",
-controversy:"ข้อถกเถียง",
-convention:"ธรรมเนียม/การประชุม",
-conventional:"ตามธรรมเนียม",
-correspond:"สอดคล้อง/ติดต่อ",
-criteria:"เกณฑ์",
-crucial:"สำคัญยิ่ง",
-currency:"สกุลเงิน",
-deduce:"อนุมาน",
-definite:"ชัดเจนแน่นอน",
-demonstrate:"แสดงให้เห็น",
-denote:"หมายถึง",
-derive:"ได้มาจาก",
-detect:"ตรวจพบ",
-deviate:"เบี่ยงเบน",
-dimension:"มิติ",
-discrete:"แยกจากกัน",
-discriminate:"เลือกปฏิบัติ/แยกแยะ",
-displace:"แทนที่/ย้ายออก",
-dispose:"กำจัด/จัดการ",
-distinct:"แตกต่างชัดเจน",
-distort:"บิดเบือน",
-diverse:"หลากหลาย",
-dominant:"มีอำนาจเหนือ",
-duration:"ระยะเวลา",
-dynamic:"เปลี่ยนแปลง/มีพลวัต",
-eliminate:"กำจัด",
-emerge:"ปรากฏขึ้น",
-empirical:"เชิงประจักษ์",
-enable:"ทำให้สามารถ",
-encounter:"เผชิญ/พบเจอ",
-enhance:"เสริม/เพิ่มพูน",
-enormous:"มหาศาล",
-ensure:"ทำให้แน่ใจ",
-entity:"หน่วย/สิ่งที่มีตัวตน",
-equivalent:"เทียบเท่า",
-erode:"กัดกร่อน",
-ethic:"จริยธรรม",
-ethical:"มีจริยธรรม",
-evaluate:"ประเมินผล",
-evident:"ชัดเจน",
-evolve:"วิวัฒนาการ",
-exceed:"เกินกว่า",
-exclude:"ยกเว้น/ไม่รวม",
-execute:"ดำเนินการ",
-exhibit:"แสดง/จัดแสดง",
-expand:"ขยาย",
-explicit:"ชัดแจ้ง",
-exploit:"ใช้ประโยชน์/เอาเปรียบ",
-facilitate:"อำนวยความสะดวก",
-feasible:"เป็นไปได้",
-fluctuate:"ผันผวน",
-formulate:"กำหนด/คิดสูตร",
-foundation:"รากฐาน",
-framework:"กรอบแนวคิด",
-fundamental:"พื้นฐานสำคัญ",
-generate:"สร้าง/ก่อให้เกิด",
-hypothesis:"สมมติฐาน",
-implicit:"โดยนัย",
-imply:"บอกเป็นนัย",
-incentive:"แรงจูงใจ",
-incidence:"อุบัติการณ์",
-incorporate:"รวมเข้าไว้",
-inevitable:"หลีกเลี่ยงไม่ได้",
-infer:"อนุมาน",
-infrastructure:"โครงสร้างพื้นฐาน",
-inherent:"โดยเนื้อแท้",
-initial:"เริ่มแรก",
-initiate:"ริเริ่ม",
-innovation:"นวัตกรรม",
-innovative:"สร้างสรรค์สิ่งใหม่",
-insight:"ความเข้าใจอย่างลึกซึ้ง",
-integral:"จำเป็น/เป็นส่วนสำคัญ",
-integrate:"บูรณาการ",
-integrity:"ความซื่อสัตย์/ความสมบูรณ์",
-intense:"เข้มข้น",
-interact:"มีปฏิสัมพันธ์",
-intermediate:"ระดับกลาง",
-internal:"ภายใน",
-interpret:"ตีความ",
-interval:"ช่วงห่าง",
-intervene:"แทรกแซง",
-intrinsic:"ที่มีอยู่ภายใน",
-investigate:"สืบสวน/ตรวจสอบ",
-justify:"ให้เหตุผลสนับสนุน",
-likewise:"ในทำนองเดียวกัน",
-logical:"มีเหตุผล",
-maintain:"รักษา/ยืนยัน",
-manipulate:"ควบคุม/จัดการ",
-mechanism:"กลไก",
-minimize:"ลดให้น้อยที่สุด",
-modify:"ปรับเปลี่ยน",
-monitor:"ติดตามตรวจสอบ",
-motivate:"กระตุ้น",
-motivation:"แรงจูงใจ",
-mutual:"ซึ่งกันและกัน",
-negate:"ปฏิเสธ/ทำให้เป็นโมฆะ",
-nevertheless:"อย่างไรก็ตาม",
-notion:"แนวคิด",
-nuance:"ความแตกต่างเล็กน้อย",
-occupy:"ครอบครอง/ใช้พื้นที่",
-orient:"ปรับทิศทาง",
-outcome:"ผลลัพธ์",
-output:"ผลผลิต",
-overlap:"ทับซ้อน",
-paradigm:"กระบวนทัศน์",
-parameter:"พารามิเตอร์/ขอบเขต",
-perceive:"รับรู้",
-perception:"การรับรู้",
-persist:"คงอยู่/ยืนหยัด",
-perspective:"มุมมอง",
-phenomenon:"ปรากฏการณ์",
-philosophy:"ปรัชญา",
-policy:"นโยบาย",
-precede:"มาก่อน",
-precise:"แม่นยำ",
-predict:"ทำนาย",
-prediction:"การคาดการณ์",
-predominant:"เด่นกว่า/ส่วนใหญ่",
-preliminary:"เบื้องต้น",
-presume:"สันนิษฐาน",
-previous:"ก่อนหน้า",
-principle:"หลักการ",
-priority:"ลำดับความสำคัญ",
-proceed:"ดำเนินต่อ",
-proportion:"สัดส่วน",
-protocol:"ระเบียบปฏิบัติ",
-psychology:"จิตวิทยา",
-publication:"สิ่งพิมพ์/การเผยแพร่",
-radical:"สุดขั้ว/รากฐาน",
-rational:"มีเหตุผล",
-ratio:"อัตราส่วน",
-regime:"ระบอบ",
-region:"ภูมิภาค",
-regulate:"ควบคุม/กำกับ",
-regulation:"กฎระเบียบ",
-reinforce:"เสริมความแข็งแกร่ง",
-reject:"ปฏิเสธ",
-relaxation:"การผ่อนคลาย",
-release:"ปล่อย/เผยแพร่",
-relevant:"เกี่ยวข้อง",
-reliability:"ความน่าเชื่อถือ",
-reluctant:"ไม่เต็มใจ",
-requirement:"ข้อกำหนด",
-reside:"อาศัยอยู่",
-resolve:"แก้ไข/ตัดสินใจ",
-restrict:"จำกัด",
-restriction:"ข้อจำกัด",
-retain:"รักษาไว้",
-reveal:"เปิดเผย",
-revenue:"รายได้",
-revise:"แก้ไข/ทบทวน",
-rigid:"เข้มงวด/แข็งทื่อ",
-scenario:"สถานการณ์สมมติ",
-scope:"ขอบเขต",
-sector:"ภาคส่วน",
-sequence:"ลำดับ",
-shift:"เปลี่ยน/กะงาน",
-significant:"สำคัญ/มีนัยสำคัญ",
-simulate:"จำลอง",
-simulation:"การจำลอง",
-solely:"เพียงอย่างเดียว",
-somewhat:"ค่อนข้าง",
-specificity:"ความเฉพาะเจาะจง",
-specify:"ระบุ",
-statistic:"สถิติ",
-statistical:"ทางสถิติ",
-submit:"ส่ง/ยื่น",
-subsequent:"ที่ตามมา",
-subsequently:"ต่อมา",
-substitute:"แทนที่",
-subtle:"ละเอียดอ่อน",
-sufficient:"เพียงพอ",
-summarize:"สรุป",
-summary:"บทสรุป",
-supplement:"เสริม/เพิ่มเติม",
-suspend:"ระงับ",
-sustain:"คงไว้/สนับสนุน",
-sustainable:"ยั่งยืน",
-symbolic:"เชิงสัญลักษณ์",
-theory:"ทฤษฎี",
-theoretical:"เชิงทฤษฎี",
-thereby:"ด้วยเหตุนั้น",
-thesis:"วิทยานิพนธ์/ข้อเสนอหลัก",
-transform:"เปลี่ยนแปลง",
-transformation:"การเปลี่ยนแปลง",
-transmit:"ถ่ายทอด/ส่งผ่าน",
-transparency:"ความโปร่งใส",
-trigger:"กระตุ้น/ตัวกระตุ้น",
-ultimate:"สูงสุด/ท้ายที่สุด",
-undergo:"ประสบ/ผ่านกระบวนการ",
-underlie:"เป็นพื้นฐานของ",
-undertake:"รับหน้าที่/ดำเนินการ",
-uniform:"สม่ำเสมอ/เครื่องแบบ",
-valid:"ถูกต้อง/ใช้ได้",
-validity:"ความเที่ยงตรง",
-variable:"ตัวแปร",
-variation:"ความแปรผัน",
-verify:"ตรวจสอบยืนยัน",
-via:"ผ่านทาง",
-virtual:"เสมือนจริง",
-whereas:"ในขณะที่",
-widespread:"แพร่หลาย",
-
+const rawVocab = {
+    easy: "AIL:ป่วย|ALE:เบียร์|ANT:มด|APE:ลิง|ARC:ส่วนโค้ง|ARK:เรือ|ARM:แขน|ART:ศิลปะ|ASH:เถ้า|ASK:ถาม|ASS:ลา|ATE:กิน|AWE:ความเกรงขาม|AXE:ขวาน|BAD:เลว|BAG:กระเป๋า|BAN:ห้าม|BAR:ท่อน|BAT:ค้างคาว|BAY:อ่าว|BED:เตียง|BEE:ผึ้ง|BEG:ขอร้อง|BET:พนัน|BIG:ใหญ่|BIN:ถังขยะ|BIT:ชิ้นเล็ก|BOG:บึง|BOW:โค้งคำนับ|BOX:กล่อง|BOY:เด็กผู้ชาย|BUG:แมลง|BUM:คนพเนจร|BUN:ขนมปัง|BUS:รถบัส|BUT:แต่|BUY:ซื้อ|CAB:รถแท็กซี่|CAN:สามารถ|CAP:หมวก|CAR:รถยนต์|CAT:แมว|COW:วัว|CRY:ร้องไห้|CUB:ลูกสัตว์|CUP:ถ้วย|CUT:ตัด|DAD:พ่อ|DAY:วัน|DEN:ถ้ำ|DEW:น้ำค้าง|DID:ทำ|DIE:ตาย|DIG:ขุด|DIP:จุ่ม|DOG:สุนัข|DOT:จุด|DRY:แห้ง|DYE:สีย้อม|EAR:หู|EAT:กิน|EGG:ไข่|EGO:อีโก้|ELF:เอลฟ์|ELK:กวางมูส|END:จบ|ERA:ยุค|EYE:ตา|FAN:พัดลม|FAR:ไกล|FAT:อ้วน|FAX:โทรสาร|FEE:ค่าธรรมเนียม|FEW:เล็กน้อย|FIG:มะเดื่อ|FIN:ครีบ|FIT:พอดี|FIX:ซ่อมแซม|FLY:บิน|FOG:หมอก|FOX:สุนัขจิ้งจอก|FUN:สนุก|GAG:ที่ปิดปาก|GAP:ช่องว่าง|GAS:ก๊าซ|GEL:เจล|GET:ได้รับ|GIG:รถม้า|GOD:พระเจ้า|GOT:ได้รับ|GUM:เหงือก|GUN:ปืน|GUT:ลำไส้|GUY:ผู้ชาย|GYM:โรงยิม|HAD:มี|HAM:แฮม|HAT:หมวก|HAY:หญ้าแห้ง|HEN:แม่ไก่|HID:ซ่อน|HIM:เขา|HIP:สะโพก|HIT:ตี|HOT:ร้อน|HOW:อย่างไร|HUG:กอด|HUT:กระท่อม|ICE:น้ำแข็ง|ILL:ป่วย|INK:หมึก|INN:โรงแรม|ION:ไอออน|ITS:ของมัน|JAM:แยม|JAR:เหยือก|JAW:ขากรรไกร|JET:เครื่องบินเจ็ท|JOB:งาน|JOG:วิ่งจ๊อกกิ้ง|JOY:ความยินดี|JUG:เหยือก|KEY:กุญแจ|KID:เด็ก|KIN:ญาติ|KIT:ชุดเครื่องมือ|LAB:ห้องทดลอง|LAD:เด็กหนุ่ม|LAW:กฎหมาย|LAY:วาง|LEG:ขา|LET:ปล่อย|LID:ฝา|LIE:โกหก|LIP:ริมฝีปาก|LOG:ท่อนซุง|LOT:มาก|LOW:ต่ำ|MAD:โกรธ|MAN:ผู้ชาย|MAP:แผนที่|MAT:เสื่อ|MEN:ผู้ชาย|MIX:ผสม|MOB:ฝูงชน|MOM:แม่|MOP:ไม้ถูพื้น|MUD:โคลน|MUG:แก้วมัค|NAP:งีบหลับ|NET:ตาข่าย|NEW:ใหม่|NOD:พยักหน้า|NOR:และไม่|NOW:ตอนนี้|NUN:แม่ชี|NUT:ถั่ว|OAK:ต้นโอ๊ก|OAR:พาย|OAT:ข้าวโอ๊ต|ODD:แปลก|OFF:ปิด|OIL:น้ำมัน|OLD:แก่|ONE:หนึ่ง|OUR:ของเรา|OUT:ออก|OWL:นกฮูก|OWN:เป็นเจ้าของ|PAD:เบาะ|PAL:เพื่อน|PAN:กระทะ|PAY:จ่าย|PEA:ถั่ว|PEN:ปากกา|PET:สัตว์เลี้ยง|PIE:พาย|PIG:หมู|PIN:เข็มหมุด|PIT:หลุม|POD:ฝัก|POP:ดังป๊อป|POT:หม้อ|PRO:มืออาชีพ|PUB:ผับ|PUG:สุนัขพันธุ์ปั๊ก|PUP:ลูกสุนัข|PUT:วาง|RAG:เศษผ้า|RAM:แกะตัวผู้|RAT:หนู|RAW:ดิบ|RED:สีแดง|RIB:ซี่โครง|RID:กำจัด|RIG:แท่นขุดเจาะ|RIM:ขอบ|RIP:ฉีก|ROB:ปล้น|ROD:คันเบ็ด|ROT:เน่า|ROW:แถว|RUB:ถู|RUG:พรม|RUN:วิ่ง|RUT:ร่อง|SAD:เศร้า|SAP:น้ำเลี้ยง|SAW:เลื่อย|SEA:ทะเล|SEE:เห็น|SET:ตั้งค่า|SEW:เย็บ|SEX:เพศ|SHY:ขี้อาย|SIN:บาป|SIP:จิบ|SIR:ท่าน|SIT:นั่ง|SIX:หก|SKI:สกี|SKY:ท้องฟ้า|SLY:เจ้าเล่ห์|SON:ลูกชาย|SOW:หว่าน|SOY:ถั่วเหลือง|SPA:สปา|SPY:สายลับ|SUN:พระอาทิตย์|TAB:แท็บ|TAG:ป้าย|TAP:ก๊อกน้ำ|TAX:ภาษี|TEA:ชา|TEN:สิบ|TIE:ผูก|TIN:ดีบุก|TIP:เคล็ดลับ|TOE:นิ้วเท้า|TON:ตัน|TOP:บนสุด|TOY:ของเล่น|TRY:พยายาม|TUB:อ่าง|TUG:ดึง|TWO:สอง|USE:ใช้|VAN:รถตู้|VAT:ถัง|VET:สัตวแพทย์|VIA:ผ่านทาง|VOW:สาบาน|WAR:สงคราม|WAX:ขี้ผึ้ง|WAY:ทาง|WEB:ใย|WET:เปียก|WHO:ใคร|WHY:ทำไม|WIG:วิกผม|WIN:ชนะ|WOK:กระทะ|YES:ใช่|YET:ยัง|YOU:คุณ|ZOO:สวนสัตว์|ACT:กระทำ|ADD:เพิ่ม|AIM:เป้าหมาย|AIR:อากาศ|ANY:ใดๆ",
+    normal: "ABILITY:ความสามารถ|ABSENCE:การขาด|ACADEMY:สถาบันการศึกษา|ACCOUNT:บัญชี|ACHIEVE:บรรลุ|ACQUIRE:ได้รับ|ADDRESS:ที่อยู่|ADVANCE:ความก้าวหน้า|ADVERSE:เป็นผลร้าย|ADVISER:ที่ปรึกษา|AGAINST:ต่อต้าน|ALREADY:แล้ว|ANALYZE:วิเคราะห์|ANCIENT:โบราณ|ANXIETY:ความวิตกกังวล|APPARENT:ชัดเจน|APPROACH:วิธีการ|APPROVAL:การอนุมัติ|ARCHITECT:สถาปนิก|ARTICLE:บทความ|ASSESS:ประเมิน|ATTEMPT:ความพยายาม|ATTRACT:ดึงดูด|AVERAGE:ค่าเฉลี่ย|BALANCE:สมดุล|BARRIER:อุปสรรค|BELIEVE:เชื่อ|BENEFIT:ผลประโยชน์|CABINET:คณะรัฐมนตรี|CALCULATE:คำนวณ|CAMPAIGN:การรณรงค์|CAPABLE:สามารถ|CAPITAL:เมืองหลวง|CAPTURE:จับกุม|CAREFUL:ระมัดระวัง|CARRIER:ผู้ขนส่ง|CATEGORY:หมวดหมู่|CENTRAL:ศูนย์กลาง|CENTURY:ศตวรรษ|CERTAIN:แน่นอน|CHAMBER:ห้อง|CHANGE:การเปลี่ยนแปลง|CHANNEL:ช่องทาง|CHAPTER:บท|CHARITY:การกุศล|CHRONIC:เรื้อรัง|CIRCUIT:วงจร|CLASSIC:คลาสสิก|CLIMATE:สภาพอากาศ|CLINICAL:ทางคลินิก|COLLECT:สะสม|COLLEGE:วิทยาลัย|COMBINE:รวมกัน|COMFORT:ความสะดวกสบาย|COMMAND:คำสั่ง|COMMENT:ความคิดเห็น|COMPACT:กะทัดรัด|COMPANY:บริษัท|COMPARE:เปรียบเทียบ|COMPETE:แข่งขัน|COMPLEX:ซับซ้อน|CONCEPT:แนวคิด|CONCERN:ความกังวล|CONCERT:คอนเสิร์ต|CONDUCT:จัดการ|CONFESS:สารภาพ|CONFIRM:ยืนยัน|CONNECT:เชื่อมต่อ|CONSENT:ยินยอม|CONSIST:ประกอบด้วย|CONTACT:ติดต่อ|CONTAIN:บรรจุ|CONTEXT:บริบท|CONTROL:ควบคุม|CONVERT:แปลง|COUNCIL:สภา|COUNSEL:ให้คำปรึกษา|COURAGE:ความกล้าหาญ|CRIMINAL:อาชญากร|CRUCIAL:สำคัญมาก|CULTURE:วัฒนธรรม|CURRENT:ปัจจุบัน|DAMAGE:ความเสียหาย|DANGER:อันตราย|DEBATE:การโต้วาที|DECLINE:ลดลง|DEFAULT:ค่าเริ่มต้น|DEFENCE:การป้องกัน|DEFICIT:การขาดดุล|DELIVER:จัดส่ง|DENSITY:ความหนาแน่น|DEPOSIT:ฝากเงิน|DESCENT:การสืบเชื้อสาย|DESERVE:สมควรได้รับ|DESIGN:ออกแบบ|DESPAIR:ความสิ้นหวัง|DESPITE:แม้ว่า|DESTROY:ทำลาย|DETAIL:รายละเอียด|DEVELOP:พัฒนา|DEVICE:อุปกรณ์|DEVOTE:อุทิศ|DISEASE:โรค|DISPLAY:แสดง|DISPUTE:ข้อพิพาท|DISTANCE:ระยะทาง|DIVERSE:หลากหลาย|DIVORCE:การหย่าร้าง|DYNAMIC:พลวัต|ECOLOGY:นิเวศวิทยา|ECONOMY:เศรษฐกิจ|EDITION:ฉบับ|EDUCATE:ให้การศึกษา|EFFECT:ผลกระทบ|EFFORT:ความพยายาม|ELEMENT:องค์ประกอบ|EMOTION:อารมณ์|EMPIRE:จักรวรรดิ|EMPLOY:จ้าง|EMPOWER:มอบอำนาจ|ENABLE:ทำให้สามารถ|ENFORCE:บังคับใช้|ENGAGE:มีส่วนร่วม|ENGINE:เครื่องยนต์|ENHANCE:เสริม|ENQUIRE:สอบถาม|ENSURE:รับรอง|ENTIRE:ทั้งหมด|ENTITLE:ให้สิทธิ|EPISODE:ตอน|EQUALLY:เท่าเทียมกัน|ESSENCE:แก่นแท้|ESTATE:อสังหาริมทรัพย์|ETHICAL:มีจริยธรรม|EXACTLY:อย่างแน่นอน|EXAMINE:ตรวจสอบ|EXCEED:เกินกว่า|EXHIBIT:จัดแสดง|EXPAND:ขยาย|EXPECT:คาดหวัง|EXPERT:ผู้เชี่ยวชาญ|EXPLAIN:อธิบาย|EXPLORE:สำรวจ|EXPORT:ส่งออก|EXPOSE:เปิดเผย|EXPRESS:แสดงออก|EXTRACT:สกัด|EXTREME:สุดขีด|FABRIC:ผ้า|FACULTY:คณะ|FAILURE:ความล้มเหลว|FASHION:แฟชั่น|FEATURE:ลักษณะเฉพาะ|FEDERAL:รัฐบาลกลาง|FINANCE:การเงิน|FITNESS:ความสมบูรณ์ของร่างกาย|FLEXIBLE:ยืดหยุ่น|FOREIGN:ต่างประเทศ|FOREST:ป่า|FORMULA:สูตร|FORTUNE:โชคชะตา|FORWARD:ไปข้างหน้า|FOUNDER:ผู้ก่อตั้ง|FREEDOM:อิสรภาพ|GALLERY:แกลเลอรี่|GATEWAY:ประตูทางเข้า|GENDER:เพศ|GENETIC:ทางพันธุกรรม|GENUINE:แท้จริง|GESTURE:ท่าทาง|GLOBAL:ระดับโลก|GRADUAL:ค่อยเป็นค่อยไป|GRAMMAR:ไวยากรณ์|GRAPHIC:กราฟิก|HABITAT:ถิ่นที่อยู่|HARMONY:ความสามัคคี|HARVEST:เก็บเกี่ยว|HEALTHY:มีสุขภาพดี|HEAVEN:สวรรค์|HERITAGE:มรดก|HISTORY:ประวัติศาสตร์|HONESTY:ความซื่อสัตย์|HORIZON:ขอบฟ้า|HOSPITAL:โรงพยาบาล|HOUSING:การเคหะ|HUNDRED:ร้อย|HUSBAND:สามี|ILLEGAL:ผิดกฎหมาย|ILLNESS:ความเจ็บป่วย|ILLUSION:ภาพลวงตา|IMAGINE:จินตนาการ|IMITATE:เลียนแบบ|IMMENSE:กว้างใหญ่|IMPACT:ผลกระทบ|IMPLEMENT:ดำเนินการ|IMPLY:บอกเป็นนัย|IMPORT:นำเข้า|IMPOSE:กำหนด|IMPRESS:ประทับใจ|IMPROVE:ปรับปรุง|INCLUDE:รวมอยู่ด้วย|INCOME:รายได้|INDEX:ดัชนี|INITIAL:เริ่มต้น|INJURY:การบาดเจ็บ|INQUIRY:การสอบสวน|INSIGHT:ความเข้าใจลึกซึ้ง|INSPIRE:สร้างแรงบันดาลใจ|INSTALL:ติดตั้ง|INSTANCE:ตัวอย่าง|INSTANT:ทันที|INSTEAD:แทนที่|INSTINCT:สัญชาตญาณ|INSURE:รับประกัน|INTEND:ตั้งใจ|INTENSE:เข้มข้น|INTENT:เจตนา|INVENT:ประดิษฐ์|INVEST:ลงทุน|INVOLVE:เกี่ยวข้อง|ISOLATE:แยกตัว|JOURNAL:วารสาร|JOURNEY:การเดินทาง|JUSTICE:ความยุติธรรม|JUSTIFY:ให้เหตุผล|KEYBOARD:แป้นพิมพ์|KITCHEN:ห้องครัว|KNOWLEDGE:ความรู้|LANGUAGE:ภาษา|LATERAL:ด้านข้าง|LAWSUIT:คดีความ|LAWYER:ทนายความ|LEADERSHIP:ความเป็นผู้นำ|LEAGUE:ลีก|LEGACY:มรดกตกทอด|LEGEND:ตำนาน|LEISURE:เวลาว่าง|LIBERTY:เสรีภาพ|LIBRARY:ห้องสมุด|LICENSE:ใบอนุญาต|LIFETIME:ตลอดชีวิต|LOGICAL:มีเหตุผล|LOYALTY:ความจงรักภักดี|MACHINE:เครื่องจักร|MAGAZINE:นิตยสาร|MAGNET:แม่เหล็ก|MAINTAIN:บำรุงรักษา|MAJORITY:ส่วนใหญ่|MANAGER:ผู้จัดการ|MANDATE:คำสั่ง|MANNER:มารยาท|MARGIN:ขอบ|MARRIAGE:การแต่งงาน|MASSIVE:ใหญ่โต|MASTER:เจ้านาย|MATCH:จับคู่|MAXIMUM:สูงสุด|MEASURE:มาตรการ|MEDICAL:ทางการแพทย์|MEDIUM:สื่อ|MELODY:ทำนองเพลง|MEMBER:สมาชิก|MEMORY:ความจำ|MENTAL:ทางจิต|MENTION:กล่าวถึง|MESSAGE:ข้อความ|METHOD:วิธีการ|MINIMUM:ขั้นต่ำ|MINISTER:รัฐมนตรี|MINORITY:ชนกลุ่มน้อย|MIRACLE:ปาฏิหาริย์|MISSION:ภารกิจ|MISTAKE:ความผิดพลาด|MIXTURE:ส่วนผสม|MOBILE:เคลื่อนที่|MODERATE:ปานกลาง|MODERN:ทันสมัย|MODEST:ถ่อมตัว|MONITOR:ตรวจสอบ|MONUMENT:อนุสาวรีย์|MORNING:ตอนเช้า|MORTGAGE:การจำนอง|MOTHER:แม่|MOTIVE:แรงจูงใจ|MOUNTAIN:ภูเขา|MULTIPLE:หลากหลาย|MUSCLE:กล้ามเนื้อ|MUSEUM:พิพิธภัณฑ์|MUSICAL:ทางดนตรี|MYSTERY:ความลึกลับ|NARRATIVE:เรื่องเล่า|NARROW:แคบ|NATION:ชาติ|NATIVE:พื้นเมือง|NATURAL:ธรรมชาติ|NATURE:ธรรมชาติ|NEARBY:ใกล้เคียง|NEGATIVE:เชิงลบ|NEGLECT:ละเลย|NETWORK:เครือข่าย|NEUTRAL:เป็นกลาง|NOBODY:ไม่มีใคร|NORMAL:ปกติ|NOTHING:ไม่มีอะไร|NOTICE:สังเกต|NOTION:ความคิด|NOVELTY:ความแปลกใหม่|NUCLEAR:นิวเคลียร์|NUMBER:จำนวน|OBJECT:วัตถุ|OBSERVE:สังเกต|OBTAIN:ได้รับ|OBVIOUS:ชัดเจน|OCCASION:โอกาส|OCCUPY:ยึดครอง|OCCUR:เกิดขึ้น|OFFENCE:การกระทำผิด|OFFER:เสนอ|OFFICE:สำนักงาน|OFFICIAL:เป็นทางการ|OPERATE:ปฏิบัติการ|OPINION:ความคิดเห็น|OPPOSE:ต่อต้าน|OPTION:ตัวเลือก|ORANGE:ส้ม|ORDER:สั่ง|ORGANIC:อินทรีย์|ORIGIN:แหล่งกำเนิด|OUTCOME:ผลลัพธ์|OUTLINE:เค้าโครง|OUTLOOK:มุมมอง|OUTPUT:ผลผลิต|OUTSIDE:ข้างนอก|OVERALL:โดยรวม|OVERCOME:เอาชนะ|OVERSEAS:ต่างประเทศ|PACKAGE:บรรจุภัณฑ์|PAINTING:ภาพวาด|PALACE:พระราชวัง|PANEL:แผงควบคุม|PARENTS:พ่อแม่|PARISH:ตำบล|PARKING:ที่จอดรถ|PARTIAL:บางส่วน|PARTICULAR:โดยเฉพาะ|PARTNER:หุ้นส่วน|PASSAGE:ทางเดิน|PASSENGER:ผู้โดยสาร|PASSION:ความหลงใหล|PASSIVE:เฉยๆ|PASSPORT:หนังสือเดินทาง|PATENT:สิทธิบัตร|PATIENT:ผู้ป่วย|PATTERN:รูปแบบ|PAYMENT:การชำระเงิน|PEASANT:ชาวนา|PENALTY:บทลงโทษ|PENSION:เงินบำนาญ|PERCENT:เปอร์เซ็นต์|PERFECT:สมบูรณ์แบบ|PERFORM:แสดง|PERHAPS:บางที|PERIOD:ช่วงเวลา|PERMIT:อนุญาต|PERSIST:ยืนกราน|PERSON:บุคคล|PHASE:ระยะ|PHILOSOPHY:ปรัชญา|PHRASE:วลี|PHYSICAL:ทางกายภาพ|PHYSICS:ฟิสิกส์|PICTURE:รูปภาพ|PILOT:นักบิน|PLANET:ดาวเคราะห์|PLASTIC:พลาสติก|PLAYER:ผู้เล่น|PLEASE:ได้โปรด|PLENTY:มากมาย|POCKET:กระเป๋าเสื้อ|POISON:ยาพิษ|POLICE:ตำรวจ|POLICY:นโยบาย|POLITICS:การเมือง|POPULAR:เป็นที่นิยม|PORTION:ส่วน|PORTRAIT:ภาพวาดบุคคล|POSITION:ตำแหน่ง|POSITIVE:เชิงบวก|POSSESS:ครอบครอง|POTENTIAL:ศักยภาพ|POVERTY:ความยากจน|PRACTICE:การปฏิบัติ|PRAISE:สรรเสริญ|PREACH:เทศนา|PRECIOUS:ล้ำค่า|PREDICT:ทำนาย|PREFER:ชอบมากกว่า|PREGNANT:ตั้งครรภ์|PREPARE:เตรียมตัว|PRESENCE:การปรากฏตัว|PRESENT:นำเสนอ|PRESERVE:อนุรักษ์|PRESIDENT:ประธานาธิบดี|PRESSURE:ความกดดัน|PRESUME:สันนิษฐาน|PRETEND:แกล้งทำ|PREVENT:ป้องกัน|PREVIOUS:ก่อนหน้านี้|PRIMARY:หลัก|PRINCE:เจ้าชาย|PRINCESS:เจ้าหญิง|PRINCIPLE:หลักการ|PRINT:พิมพ์|PRISON:คุก|PRIVATE:ส่วนตัว|PRIVILEGE:สิทธิพิเศษ|PROBABLY:บางที|PROBLEM:ปัญหา|PROCEED:ดำเนินการต่อ|PROCESS:กระบวนการ|PRODUCE:ผลิต|PRODUCT:ผลิตภัณฑ์|PROFILE:ประวัติ|PROFIT:กำไร|PROGRAM:โปรแกรม|PROGRESS:ความก้าวหน้า|PROJECT:โครงการ|PROMISE:สัญญา|PROMOTE:ส่งเสริม|PROMPT:รวดเร็ว|PROOF:หลักฐาน|PROPER:เหมาะสม|PROPERTY:ทรัพย์สิน|PROPOSE:เสนอ|PROSPECT:โอกาส|PROTECT:ป้องกัน|PROTEST:ประท้วง|PROVIDE:จัดหาให้|PROVINCE:จังหวัด|PUBLISH:ตีพิมพ์|PURPOSE:วัตถุประสงค์|PURSUE:ไล่ตาม|QUALIFY:มีคุณสมบัติ|QUALITY:คุณภาพ|QUANTITY:ปริมาณ|QUARTER:หนึ่งในสี่|QUESTION:คำถาม|QUICKLY:อย่างรวดเร็ว|QUIET:เงียบ|RADICAL:รุนแรง|RAILWAY:ทางรถไฟ|RAPIDLY:อย่างรวดเร็ว|REACH:เข้าถึง|REACTION:ปฏิกิริยา|READER:ผู้อ่าน|READILY:อย่างง่ายดาย|REALITY:ความเป็นจริง|REALIZE:ตระหนัก|REASON:เหตุผล|RECEIVE:รับ|RECENT:เมื่อเร็วๆนี้|RECOGNIZE:รับรู้|RECOMMEND:แนะนำ|RECORD:บันทึก|RECOVER:ฟื้นตัว|REDUCE:ลดลง|REFERENCE:การอ้างอิง|REFLECT:สะท้อน|REFORM:ปฏิรูป|REFUSE:ปฏิเสธ|REGARD:พิจารณา|REGION:ภูมิภาค|REGISTER:ลงทะเบียน|REGULAR:ปกติ|REGULATE:ควบคุม|REJECT:ปฏิเสธ|RELATE:เกี่ยวข้อง|RELATION:ความสัมพันธ์|RELATIVE:ญาติ|RELEASE:ปล่อย|RELEVANT:ที่เกี่ยวข้อง|RELIEF:การบรรเทา|RELIGION:ศาสนา|RELY:พึ่งพา|REMAIN:คงอยู่|REMARK:ข้อสังเกต|REMEMBER:จำได้|REMIND:เตือนความจำ|REMOTE:ห่างไกล|REMOVE:เอาออก|REPAIR:ซ่อมแซม|REPEAT:ทำซ้ำ|REPLACE:แทนที่|REPLY:ตอบกลับ|REPORT:รายงาน|REPRESENT:เป็นตัวแทน|REQUEST:คำขอ|REQUIRE:ต้องการ|RESCUE:ช่วยเหลือ|RESEARCH:การวิจัย|RESERVE:จอง|RESIDENT:ผู้อยู่อาศัย|RESIGN:ลาออก|RESIST:ต่อต้าน|RESOLVE:แก้ไข|RESORT:รีสอร์ท|RESOURCE:ทรัพยากร|RESPECT:เคารพ|RESPOND:ตอบสนอง|RESPONSE:การตอบสนอง|RESTORE:ฟื้นฟู|RESTRICT:จำกัด|RESULT:ผลลัพธ์|RETAIN:เก็บไว้|RETIRE:เกษียณ|RETURN:กลับ|REVEAL:เปิดเผย|REVENUE:รายได้|REVERSE:ย้อนกลับ|REVIEW:ทบทวน|REWARD:รางวัล|RHYTHM:จังหวะ|ROUTINE:กิจวัตร|SATISFY:ทำให้พอใจ|SCANDAL:เรื่องอื้อฉาว|SCENARIO:ภาพเหตุการณ์|SCHEME:โครงการ|SCHOLAR:นักวิชาการ|SCIENCE:วิทยาศาสตร์|SCREEN:หน้าจอ|SEARCH:ค้นหา|SEASON:ฤดูกาล|SECOND:วินาที|SECRET:ความลับ|SECTION:ส่วน|SECURE:ปลอดภัย|SELECT:เลือก|SENIOR:อาวุโส|SERIOUS:จริงจัง|SESSION:วาระ|SETTLE:ตั้งถิ่นฐาน|SEVERE:รุนแรง|SHADOW:เงา|SHELTER:ที่พักพิง|SHOCK:ตกใจ|SILENCE:ความเงียบ|SIMILAR:คล้ายกัน|SIMPLE:เรียบง่าย|SINGLE:เดี่ยว|SITUATION:สถานการณ์|SKILL:ทักษะ|SMOOTH:เรียบ|SOCIETY:สังคม|SOFTWARE:ซอฟต์แวร์|SOLDIER:ทหาร|SOLID:แข็ง|SOLUTION:ทางออก|SOURCE:แหล่งที่มา|SPECIAL:พิเศษ|SPECIES:สายพันธุ์|SPECIFIC:เฉพาะเจาะจง|SPEECH:คำพูด|SPIRIT:วิญญาณ|SQUARE:สี่เหลี่ยม|STABLE:มั่นคง|STANDARD:มาตรฐาน|STATION:สถานี|STATUS:สถานะ|STEADY:สม่ำเสมอ|STOMACH:กระเพาะอาหาร|STRANGE:แปลก|STRATEGY:กลยุทธ์|STREAM:ลำธาร|STREET:ถนน|STRENGTH:ความแข็งแกร่ง|STRICT:เข้มงวด|STRIKE:โจมตี|STRUCTURE:โครงสร้าง|STRUGGLE:ดิ้นรน|STUDENT:นักเรียน|STUDIO:สตูดิโอ|STUDY:ศึกษา|STUPID:โง่|SUBJECT:วิชา|SUBMIT:ส่ง|SUBSTANCE:สาร|SUCCEED:ประสบความสำเร็จ|SUCCESS:ความสำเร็จ|SUDDEN:กะทันหัน|SUFFER:ทนทุกข์|SUGGEST:แนะนำ|SUMMER:ฤดูร้อน|SUPPLY:จัดหา|SUPPORT:สนับสนุน|SUPPOSE:สมมติ|SURFACE:พื้นผิว|SURGERY:ศัลยกรรม|SURPRISE:ประหลาดใจ|SURROUND:ล้อมรอบ|SURVIVE:เอาชีวิตรอด|SUSPECT:สงสัย|SUSTAIN:รักษาไว้|SYMBOL:สัญลักษณ์|SYMPTOM:อาการ|SYSTEM:ระบบ|TACKLE:จัดการ|TALENT:พรสวรรค์|TARGET:เป้าหมาย|TEACHER:ครู|TENSION:ความตึงเครียด|TERRIBLE:แย่มาก|TERRITORY:อาณาเขต|THEATER:โรงละคร|THEORY:ทฤษฎี|THERAPY:การบำบัด|THREAT:ภัยคุกคาม|TICKET:ตั๋ว|TIMBER:ไม้ซุง|TISSUE:เนื้อเยื่อ|TONGUE:ลิ้น|TOURIST:นักท่องเที่ยว|TOWARD:ไปยัง|TOWER:หอคอย|TRADITION:ประเพณี|TRAFFIC:การจราจร|TRAGEDY:โศกนาฏกรรม|TRAINING:การฝึกอบรม|TRANSFER:โอน|TREATY:สนธิสัญญา|TREND:แนวโน้ม|TRIUMPH:ชัยชนะ|TROUBLE:ปัญหา|TYPICAL:ทั่วไป|UNDERSTAND:เข้าใจ|UNIQUE:เป็นเอกลักษณ์|UNIVERSE:จักรวาล|UNLESS:เว้นแต่|UPON:บน|URBAN:ในเมือง|USEFUL:มีประโยชน์|VACATION:วันหยุด|VALLEY:หุบเขา|VALUABLE:มีค่า|VALUE:มูลค่า|VARIETY:ความหลากหลาย|VARIOUS:หลากหลาย|VEHICLE:ยานพาหนะ|VENTURE:การลงทุน|VERSION:เวอร์ชัน|VICTIM:เหยื่อ|VICTORY:ชัยชนะ|VIDEO:วิดีโอ|VILLAGE:หมู่บ้าน|VIOLENCE:ความรุนแรง|VIRTUAL:เสมือนจริง|VISIBLE:มองเห็นได้|VISION:วิสัยทัศน์|VISITOR:ผู้มาเยือน|VITAL:สำคัญยิ่ง|VOLUME:ปริมาตร|WANDER:เร่ร่อน|WARNING:คำเตือน|WEALTH:ความมั่งคั่ง|WEAPON:อาวุธ|WEATHER:สภาพอากาศ|WEIGHT:น้ำหนัก|WELCOME:ยินดีต้อนรับ|WELFARE:สวัสดิการ|WHETHER:หรือไม่|WINDOW:หน้าต่าง|WINTER:ฤดูหนาว|WISDOM:ปัญญา|WITNESS:พยาน|WONDER:ประหลาดใจ|WORKER:คนงาน|WORTH:คุ้มค่า|WRITER:นักเขียน|YELLOW:สีเหลือง|YOUTH:เยาวชน",
+    hard: "ABANDON:ละทิ้ง|ABOLISH:ยกเลิก|ABUNDANT:อุดมสมบูรณ์|ACCELERATE:เร่งความเร็ว|ACCUMULATE:สะสม|ACCURATE:แม่นยำ|ACKNOWLEDGE:ยอมรับ|ADAPTATION:การปรับตัว|ADEQUATE:เพียงพอ|ADOLESCENT:วัยรุ่น|ADVANTAGEOUS:เป็นประโยชน์|AGGRESSIVE:ก้าวร้าว|ALLOCATE:จัดสรร|ALTERNATIVE:ทางเลือก|AMBIGUOUS:กำกวม|AMBITIOUS:ทะเยอทะยาน|AMEND:แก้ไข|ANTICIPATE:คาดการณ์|APOLOGIZE:ขอโทษ|APPARATUS:อุปกรณ์|APPRECIATE:ชื่นชม|APPROPRIATE:เหมาะสม|ARBITRARY:ตามอำเภอใจ|ARTIFICIAL:เทียม|ASSASSINATE:ลอบสังหาร|ASSEMBLE:รวบรวม|ASSESSMENT:การประเมิน|ASSOCIATE:เชื่อมโยง|ASSUMPTION:ข้อสมมติฐาน|ATMOSPHERE:ชั้นบรรยากาศ|ATTACHMENT:สิ่งที่แนบมา|ATTENDANCE:การเข้าร่วม|AUTHENTIC:แท้จริง|AUTHORITY:อำนาจ|AUTOMATIC:อัตโนมัติ|AVAILABLE:มีอยู่|BACKGROUND:พื้นหลัง|BANKRUPTCY:การล้มละลาย|BEHAVIOR:พฤติกรรม|BENEFICIAL:เป็นประโยชน์|BIOLOGICAL:ทางชีววิทยา|BOUNDARIES:ขอบเขต|BRILLIANT:ฉลาดหลักแหลม|BROADCAST:ออกอากาศ|CAPABILITY:ความสามารถ|CATASTROPHE:ความหายนะ|CELEBRATE:เฉลิมฉลอง|CERTIFICATE:ใบรับรอง|CHALLENGE:ความท้าทาย|CHARACTERISTIC:ลักษณะนิสัย|CIRCUMSTANCE:สถานการณ์|CIVILIZATION:อารยธรรม|COLLABORATE:ร่วมมือ|COLLEAGUE:เพื่อนร่วมงาน|COMMERCIAL:เชิงพาณิชย์|COMMISSION:คณะกรรมการ|COMMITMENT:ความมุ่งมั่น|COMMITTEE:คณะกรรมการ|COMMUNICATE:สื่อสาร|COMMUNITY:ชุมชน|COMPARISON:การเปรียบเทียบ|COMPENSATION:การชดเชย|COMPETITION:การแข่งขัน|COMPETITIVE:เกี่ยวกับการแข่งขัน|COMPLICATED:ซับซ้อน|COMPONENT:ส่วนประกอบ|COMPREHENSIVE:ครอบคลุม|COMPROMISE:ประนีประนอม|CONCENTRATE:จดจ่อ|CONCEPTION:แนวความคิด|CONCLUSION:ข้อสรุป|CONFERENCE:การประชุม|CONFIDENCE:ความมั่นใจ|CONFIDENTIAL:เป็นความลับ|CONSEQUENCE:ผลที่ตามมา|CONSERVATIVE:อนุรักษ์นิยม|CONSIDERABLE:มากมาย|CONSISTENT:สม่ำเสมอ|CONSOLIDATE:รวมเป็นหนึ่ง|CONSPIRACY:การสมรู้ร่วมคิด|CONSTITUTION:รัฐธรรมนูญ|CONSTRUCT:สร้าง|CONSUMPTION:การบริโภค|CONTEMPORARY:ร่วมสมัย|CONTINUOUS:ต่อเนื่อง|CONTRIBUTE:สนับสนุน|CONTROVERSY:ข้อขัดแย้ง|CONVENIENCE:ความสะดวกสบาย|CONVENTIONAL:ตามธรรมเนียม|COOPERATION:การให้ความร่วมมือ|COORDINATE:ประสานงาน|CORPORATION:บริษัท|CORRESPOND:สอดคล้อง|CORRUPTION:การทุจริต|COUNSELLOR:ที่ปรึกษา|COUNTERPART:คู่สัญญา|CREDENTIAL:หนังสือรับรอง|CRITERION:เกณฑ์|CULTIVATE:เพาะปลูก|CURRICULUM:หลักสูตร|DECLARATION:การประกาศ|DEFICIENCY:ความบกพร่อง|DEFINITION:คำจำกัดความ|DELIBERATE:ไตร่ตรอง|DEMOCRACY:ประชาธิปไตย|DEMONSTRATE:สาธิต|DEPARTMENT:แผนก|DEPENDENT:ขึ้นอยู่กับ|DEPRESSION:ภาวะซึมเศร้า|DERIVATIVE:อนุพันธ์|DESCRIPTION:คำอธิบาย|DESTINATION:จุดหมายปลายทาง|DESTRUCTION:การทำลายล้าง|DETERMINE:กำหนด|DEVELOPMENT:การพัฒนา|DEVIATION:การเบี่ยงเบน|DIAGNOSIS:การวินิจฉัย|DIFFERENCE:ความแตกต่าง|DIFFICULTY:ความยากลำบาก|DIMENSION:มิติ|DIRECTION:ทิศทาง|DIRECTORY:สมุดโทรศัพท์|DISAPPEAR:หายไป|DISAPPOINT:ทำให้ผิดหวัง|DISCIPLINE:วินัย|DISCLOSURE:การเปิดเผย|DISCOURSE:การสนทนา|DISCOVERY:การค้นพบ|DISCRIMINATE:เลือกปฏิบัติ|DISCUSSION:การอภิปราย|DISTINGUISH:แยกแยะ|DISTRIBUTE:แจกจ่าย|DISTURBANCE:การรบกวน|DIVERSITY:ความหลากหลาย|DOCUMENT:เอกสาร|DOMINATE:ครอบงำ|ECONOMICS:เศรษฐศาสตร์|EFFECTIVE:มีประสิทธิภาพ|EFFICIENCY:ประสิทธิภาพ|ELEVATOR:ลิฟต์|ELIMINATE:กำจัด|EMERGENCY:เหตุฉุกเฉิน|EMPHASIZE:เน้นย้ำ|EMPLOYMENT:การจ้างงาน|ENCOURAGE:ส่งเสริม|ENDURANCE:ความอดทน|ENGAGEMENT:การหมั้น|ENTERPRISE:องค์กร|ENTERTAIN:ให้ความบันเทิง|ENTHUSIASM:ความกระตือรือร้น|ENVIRONMENT:สิ่งแวดล้อม|EQUIPMENT:อุปกรณ์|EQUIVALENT:เทียบเท่า|ESSENTIAL:จำเป็น|ESTABLISH:ก่อตั้ง|ESTIMATE:ประมาณการ|EVALUATE:ประเมินผล|EVIDENCE:หลักฐาน|EVOLUTION:วิวัฒนาการ|EXAGGERATE:พูดเกินจริง|EXAMINATION:การสอบ|EXCEPTION:ข้อยกเว้น|EXCESSIVE:มากเกินไป|EXCHANGE:แลกเปลี่ยน|EXCITEMENT:ความตื่นเต้น|EXCLUSIVE:สิทธิพิเศษ|EXECUTIVE:ผู้บริหาร|EXHAUSTION:ความเหนื่อยล้า|EXHIBITION:นิทรรศการ|EXISTENCE:การมีอยู่|EXPANSION:การขยายตัว|EXPECTATION:ความคาดหวัง|EXPEDITION:การเดินทาง|EXPENSIVE:แพง|EXPERIENCE:ประสบการณ์|EXPERIMENT:การทดลอง|EXPLANATION:คำอธิบาย|EXPRESSION:การแสดงออก|EXTENSION:การขยาย|EXTENSIVE:กว้างขวาง|EXTRAORDINARY:พิเศษ|FACILITATE:อำนวยความสะดวก|FASCINATING:น่าหลงใหล|FAVORABLE:ซึ่งเป็นที่โปรดปราน|FLUCTUATION:การผันผวน|FOUNDATION:รากฐาน|FRAMEWORK:กรอบ|FRUSTRATION:ความหงุดหงิด|FUNCTIONAL:ซึ่งทำหน้าที่|FUNDAMENTAL:พื้นฐาน|FURNITURE:เฟอร์นิเจอร์|GENERATION:รุ่น|GEOGRAPHY:ภูมิศาสตร์|GOVERNMENT:รัฐบาล|GRANDFATHER:ปู่ตา|GRANDMOTHER:ย่าตา|GUARANTEE:รับประกัน|GUIDELINES:แนวทาง|HEADQUARTERS:สำนักงานใหญ่|HEALTHCARE:การดูแลสุขภาพ|HELICOPTER:เฮลิคอปเตอร์|HIGHLIGHT:จุดเด่น|HISTORICAL:ทางประวัติศาสตร์|HOMETOWN:บ้านเกิด|HONORABLE:น่าเคารพ|HOSPITALITY:การต้อนรับ|HYPOTHESIS:สมมติฐาน|IDENTICAL:เหมือนกัน|IDENTIFY:ระบุ|IDEOLOGICAL:ทางอุดมการณ์|ILLUSTRATE:อธิบายด้วยภาพ|IMAGINATION:จินตนาการ|IMMEDIATE:ทันที|IMMIGRATION:การอพยพ|IMPERATIVE:จำเป็น|IMPLEMENTATION:การดำเนินการ|IMPLICATION:ความหมายแฝง|IMPORTANCE:ความสำคัญ|IMPRESSION:ความประทับใจ|INCENTIVE:สิ่งจูงใจ|INCIDENCE:อุบัติการณ์|INDEPENDENT:อิสระ|INDICATOR:ตัวบ่งชี้|INDIGENOUS:พื้นเมือง|INDIVIDUAL:รายบุคคล|INDUSTRIAL:อุตสาหกรรม|INEVITABLE:หลีกเลี่ยงไม่ได้|INFECTION:การติดเชื้อ|INFLATION:อัตราเงินเฟ้อ|INFLUENCE:อิทธิพล|INFORMATION:ข้อมูล|INFRASTRUCTURE:โครงสร้างพื้นฐาน|INGREDIENT:ส่วนผสม|INITIATIVE:ความคิดริเริ่ม|INNOVATION:นวัตกรรม|INSPECTION:การตรวจสอบ|INSPIRATION:แรงบันดาลใจ|INSTALLATION:การติดตั้ง|INSTITUTE:สถาบัน|INSTITUTION:สถาบัน|INSTRUCTION:คำแนะนำ|INSTRUMENT:เครื่องมือ|INSURANCE:ประกันภัย|INTEGRATE:บูรณาการ|INTELLECTUAL:ทางปัญญา|INTELLIGENCE:ความฉลาด|INTERACTION:ปฏิสัมพันธ์|INTERESTING:น่าสนใจ|INTERFERE:แทรกแซง|INTERNATIONAL:นานาชาติ|INTERPRET:แปลความหมาย|INTERRUPT:ขัดจังหวะ|INTERSECT:ตัดกัน|INTERVENTION:การแทรกแซง|INTERVIEW:สัมภาษณ์|INTRODUCE:แนะนำ|INTRODUCTION:บทนำ|INVENTION:การประดิษฐ์|INVESTIGATE:สืบสวน|INVESTIGATION:การสืบสวน|INVESTMENT:การลงทุน|INVISIBLE:มองไม่เห็น|INVOLVEMENT:การมีส่วนร่วม|IRREGULAR:ไม่สม่ำเสมอ|ISOLATION:การแยกตัว|JUDGEMENT:การตัดสิน|JURISDICTION:อำนาจศาล|KNOWLEDGE:ความรู้|LABORATORY:ห้องปฏิบัติการ|LANDSCAPE:ภูมิทัศน์|LEADERSHIP:ความเป็นผู้นำ|LEGISLATION:การออกกฎหมาย|LEGITIMATE:ชอบด้วยกฎหมาย|LITERATURE:วรรณกรรม|LOCOMOTIVE:หัวรถจักร|LUXURIOUS:หรูหรา|MACHINERY:เครื่องจักร|MAGNIFICENT:งดงาม|MAINTENANCE:การบำรุงรักษา|MANAGEMENT:การจัดการ|MANIPULATE:ควบคุม|MANUFACTURE:ผลิต|MATHEMATICS:คณิตศาสตร์|MECHANICAL:ทางกล|MECHANISM:กลไก|MEDICATION:ยา|MELANCHOLY:ความเศร้าโศก|MEMBERSHIP:ความเป็นสมาชิก|METABOLISM:การเผาผลาญ|METROPOLITAN:เกี่ยวกับเมืองหลวง|MICROSCOPE:กล้องจุลทรรศน์|MINORITY:ชนกลุ่มน้อย|MISCELLANEOUS:เบ็ดเตล็ด|MODERATE:ปานกลาง|MODIFICATION:การดัดแปลง|MOLECULAR:ระดับโมเลกุล|MORTGAGE:การจำนอง|MOTIVATION:แรงจูงใจ|MYSTERIOUS:ลึกลับ|NARRATIVE:เรื่องเล่า|NATIONALITY:สัญชาติ|NAVIGATE:นำทาง|NECESSARY:จำเป็น|NEGOTIATE:เจรจาต่อรอง|NEIGHBORHOOD:ละแวกบ้าน|NEUROLOGICAL:ทางระบบประสาท|NEVERTHELESS:อย่างไรก็ตาม|NEWSPAPER:หนังสือพิมพ์|NOMINATION:การเสนอชื่อ|NOTEWORTHY:น่าสังเกต|NUTRITION:โภชนาการ|OBEDIENT:เชื่อฟัง|OBJECTION:การคัดค้าน|OBJECTIVE:วัตถุประสงค์|OBLIGATION:ภาระผูกพัน|OBSERVATION:การสังเกต|OBSTACLE:อุปสรรค|OCCUPATION:อาชีพ|OCCURRENCE:เหตุการณ์|OPERATION:การดำเนินการ|OPPONENT:คู่ต่อสู้|OPPORTUNITY:โอกาส|OPPOSITION:การต่อต้าน|OPTIMISTIC:มองโลกในแง่ดี|ORCHESTRA:วงออร์เคสตรา|ORDINARY:ธรรมดา|ORGANIZATION:องค์กร|ORIENTATION:การปฐมนิเทศ|ORIGINAL:ต้นฉบับ|OUTRAGEOUS:ฝ่าฝืน|OVERWHELM:ท่วมท้น|PARAMOUNT:สูงสุด|PARTICIPATE:เข้าร่วม|PARTICULAR:โดยเฉพาะ|PARTNERSHIP:ความเป็นหุ้นส่วน|PASSENGER:ผู้โดยสาร|PASSIONATE:หลงใหล|PATHOLOGY:พยาธิวิทยา|PECULIAR:ประหลาด|PEDESTRIAN:คนเดินเท้า|PENETRATE:แทรกซึม|PERCEPTION:การรับรู้|PERFORMANCE:การแสดง|PERMISSION:การอนุญาต|PERPETUAL:ตลอดไป|PERSPECTIVE:มุมมอง|PERSUADE:ชักชวน|PHENOMENON:ปรากฏการณ์|PHILOSOPHY:ปรัชญา|PHOTOGRAPH:ภาพถ่าย|PHYSICIAN:แพทย์|PLACEMENT:การจัดวาง|PLATFORM:แพลตฟอร์ม|POLLUTION:มลพิษ|POPULATION:ประชากร|PORTFOLIO:ผลงาน|POTENTIAL:ศักยภาพ|PRECEDENT:แบบอย่าง|PREFERENCE:ความชอบ|PREGNANCY:การตั้งครรภ์|PRELIMINARY:เบื้องต้น|PREPARATION:การเตรียมการ|PRESCRIPTION:ใบสั่งยา|PRESENTATION:การนำเสนอ|PRESIDENTIAL:เกี่ยวกับประธานาธิบดี|PRESUMABLY:น่าจะ|PREVALENT:แพร่หลาย|PREVENTION:การป้องกัน|PRINCIPLE:หลักการ|PRIORITY:ลำดับความสำคัญ|PRISONER:นักโทษ|PRIVATIZE:แปรรูปเป็นของเอกชน|PROBABILITY:ความน่าจะเป็น|PROCEDURE:ขั้นตอน|PROCEEDING:การดำเนินการ|PROFESSION:อาชีพ|PROFESSOR:ศาสตราจารย์|PROFITABLE:ทำกำไรได้|PROMINENT:โดดเด่น|PROPORTION:สัดส่วน|PROPOSITION:ข้อเสนอ|PROSECUTE:ฟ้องร้อง|PROSPECTIVE:ที่คาดหวัง|PROSPERITY:ความเจริญรุ่งเรือง|PROTECTION:การป้องกัน|PROTOTYPE:ต้นแบบ|PROVISION:บทบัญญัติ|PSYCHOLOGY:จิตวิทยา|PUBLICATION:การตีพิมพ์|PUNISHMENT:การลงโทษ|PURCHASER:ผู้ซื้อ|QUALIFICATION:คุณสมบัติ|QUANTITATIVE:เชิงปริมาณ|QUARANTINE:การกักกัน|QUESTIONNAIRE:แบบสอบถาม|RADIATION:รังสี|RADIOACTIVE:กัมมันตภาพรังสี|RATIONAL:มีเหตุผล|REACTION:ปฏิกิริยา|REALISTIC:สมจริง|REASONABLE:สมเหตุสมผล|REBELLION:การกบฏ|RECEIPT:ใบเสร็จ|RECEPTION:การต้อนรับ|RECESSION:ภาวะเศรษฐกิจถดถอย|RECOGNITION:การจดจำ|RECOMMEND:แนะนำ|RECONSTRUCTION:การสร้างใหม่|RECORDING:การบันทึก|RECOVERY:การฟื้นตัว|RECRUITMENT:การสรรหา|REDUCTION:การลดลง|REFERENCE:การอ้างอิง|REFLECTION:การสะท้อน|REFRIGERATOR:ตู้เย็น|REGISTRATION:การลงทะเบียน|REGULATION:กฎข้อบังคับ|REHEARSAL:การซ้อม|REINFORCE:เสริมแรง|RELEVANT:ที่เกี่ยวข้อง|RELIABILITY:ความน่าเชื่อถือ|RELUCTANT:ไม่เต็มใจ|REMARKABLE:น่าสังเกต|REMEMBRANCE:การรำลึก|RENAISSANCE:ยุคฟื้นฟูศิลปวิทยา|RENEWABLE:หมุนเวียน|REPLACEMENT:การแทนที่|REPORTING:การรายงาน|REPRESENTATION:การเป็นตัวแทน|REPRESENTATIVE:ตัวแทน|REPRODUCTION:การสืบพันธุ์|REPUBLICAN:พรรครีพับลิกัน|REPUTATION:ชื่อเสียง|REQUIREMENT:ข้อกำหนด|RESEARCHER:นักวิจัย|RESEMBLANCE:ความคล้ายคลึง|RESERVATION:การจอง|RESISTANCE:การต่อต้าน|RESOLUTION:มติ|RESPECTIVE:ตามลำดับ|RESPIRATION:การหายใจ|RESPONDENT:ผู้ตอบ|RESPONSIBILITY:ความรับผิดชอบ|RESTAURANT:ร้านอาหาร|RESTORATION:การฟื้นฟู|RESTRICTION:การจำกัด|RETIREMENT:การเกษียณอายุ|REVELATION:การเปิดเผย|REVOLUTION:การปฏิวัติ|RIDICULOUS:น่าขัน|SACRIFICE:ความเสียสละ|SALVATION:การช่วยให้รอด|SANCTUARY:สถานที่ศักดิ์สิทธิ์|SATISFACTION:ความพึงพอใจ|SCHEDULING:การจัดตารางเวลา|SCHOLARSHIP:ทุนการศึกษา|SCIENTIFIC:ทางวิทยาศาสตร์|SCREENING:การคัดกรอง|SECRETARY:เลขานุการ|SECURITY:ความปลอดภัย|SELECTION:การเลือก|SENSATION:ความรู้สึก|SENSITIVE:อ่อนไหว|SEPARATION:การแยกจากกัน|SETTLEMENT:การตั้งถิ่นฐาน|SIGNATURE:ลายเซ็น|SIGNIFICANCE:ความสำคัญ|SIMULATION:การจำลอง|SITUATION:สถานการณ์|SOCIOLOGY:สังคมวิทยา|SPECIALIST:ผู้เชี่ยวชาญ|SPECTACULAR:น่าตื่นตาตื่นใจ|SPECULATION:การเก็งกำไร|SPONSORSHIP:การเป็นผู้สนับสนุน|SPONTANEOUS:เกิดขึ้นเอง|STATEMENT:แถลงการณ์|STATISTIC:สถิติ|STATUTORY:ตามกฎหมาย|STIMULATE:กระตุ้น|STRATEGIC:เชิงกลยุทธ์|STRUCTURAL:เชิงโครงสร้าง|SUBMISSION:การยอมจำนน|SUBSCRIBE:สมัครสมาชิก|SUBSEQUENT:ภายหลัง|SUBSIDIZE:อุดหนุน|SUBSTANTIAL:มากมาย|SUBSTITUTE:ตัวแทน|SUCCESSFUL:ประสบความสำเร็จ|SUFFICIENT:เพียงพอ|SUPERVISE:ดูแล|SUPPLEMENT:อาหารเสริม|SURRENDER:ยอมจำนน|SURVEILLANCE:การเ้าระวัง|SUSPENSION:การระงับ|SUSTAINABLE:ยั่งยืน|SYMPATHETIC:เห็นอกเห็นใจ|SYNDICATE:สมาคม|SYNTHETIC:สังเคราะห์|SYSTEMATIC:เป็นระบบ|TECHNOLOGY:เทคโนโลยี|TELEVISION:โทรทัศน์|TEMPERATURE:อุณหภูมิ|TEMPORARY:ชั่วคราว|TENDENCY:แนวโน้ม|TERRITORY:อาณาเขต|TESTIMONY:คำให้การ|THEORETICAL:ทางทฤษฎี|THERAPEUTIC:เกี่ยวกับการรักษาโรค|TOLERANCE:ความอดทน|TOURNAMENT:การแข่งขัน|TRADITION:ประเพณี|TRANSACTION:การทำธุรกรรม|TRANSCRIPTION:การถอดเสียง|TRANSFORM:เปลี่ยนรูป|TRANSITION:การเปลี่ยนแปลง|TRANSLATION:การแปล|TRANSMISSION:การส่งผ่าน|TRANSPARENT:โปร่งใส|TRANSPORTATION:การขนส่ง|TREMENDOUS:ใหญ่โต|TRIBUNAL:ศาล|ULTIMATELY:ท้ายที่สุด|UNANIMOUS:เป็นเอกฉันท์|UNDERGO:ประสบ|UNDERSTAND:เข้าใจ|UNDERTAKE:รับผิดชอบ|UNEMPLOYMENT:การว่างงาน|UNFORTUNATE:โชคร้าย|UNIVERSAL:สากล|UNIVERSITY:มหาวิทยาลัย|UNPRECEDENTED:ไม่เคยมีมาก่อน|URBANIZATION:การขยายตัวของเมือง|UTILIZATION:การนำไปใช้ประโยชน์|VACCINATION:การฉีดวัคซีน|VALIDATION:การตรวจสอบความถูกต้อง|VARIATION:การเปลี่ยนแปลง|VEGETATION:พืชพันธุ์|VENTILATION:การระบายอากาศ|VIOLATION:การละเมิด|VOCABULARY:คำศัพท์|VULNERABLE:อ่อนแอ|WASHINGTON:วอชิงตัน|WATERFALL:น้ำตก|WIDESPREAD:แพร่หลาย|WILDERNESS:ถิ่นทุรกันดาร|WITHDRAWAL:การถอนตัว|WORKPLACE:สถานที่ทำงาน|WORTHWHILE:คุ้มค่า"
 };
 
-/*
-   Dictionary lookup: FreeDictionaryAPI.com (data sourced from Wiktionary).
-   We only accept Thai translations already present in dictionary entries.
-   No machine-translation fallback is used.
-*/
-const DICTIONARY_API = "https://freedictionaryapi.com/api/v1/entries/en/";
-const translationCacheKey = "SWG_dictionary_translations_v3";
-let translationCache = {};
-
-try {
-    const cached = JSON.parse(localStorage.getItem(translationCacheKey) || "{}");
-    if (cached && typeof cached === "object" && !Array.isArray(cached)) {
-        translationCache = cached;
-    }
-} catch (error) {
-    translationCache = {};
-    console.warn("Could not read cached dictionary entries.", error);
-}
-
-function isThaiTranslation(value) {
-    return typeof value === "string" &&
-        /\p{Script=Thai}/u.test(value) &&
-        value.length <= 120;
-}
-
-function collectThaiDictionaryTranslations(senses, found) {
-    if (!Array.isArray(senses)) return;
-    for (const sense of senses) {
-        for (const item of (Array.isArray(sense.translations) ? sense.translations : [])) {
-            const langCode = String(item?.language?.code || "").toLowerCase();
-            const translation = String(item?.word || "").trim();
-            if ((langCode === "th" || langCode === "tha") && isThaiTranslation(translation)) {
-                found.push(translation);
-            }
-        }
-        collectThaiDictionaryTranslations(sense.subsenses, found);
-    }
-}
-
-async function fetchTranslation(english) {
-    const key = String(english || "").trim().toLowerCase();
-    if (!key) throw new Error("Missing dictionary headword.");
-
-    const cached = translationCache[key];
-    if (isThaiTranslation(cached?.thai)) return cached.thai;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 9000);
-    try {
-        const url = DICTIONARY_API + encodeURIComponent(key) + "?translations=true";
-        const response = await fetch(url, { signal: controller.signal });
-        if (!response.ok) throw new Error("Dictionary lookup failed: " + response.status);
-
-        const result = await response.json();
-        const entries = Array.isArray(result?.entries) ? result.entries : [];
-        const translations = [];
-
-        for (const entry of entries) {
-            const languageCode = String(entry?.language?.code || "").toLowerCase();
-            if (languageCode !== "en" && languageCode !== "eng") continue;
-            collectThaiDictionaryTranslations(entry.senses, translations);
-        }
-
-        // Dictionary senses are generally ordered from the most common meaning first.
-        // Show only one Thai translation to keep the game's vocabulary clear.
-        const unique = [...new Set(translations)];
-        if (!unique.length) throw new Error("No Thai dictionary translation found for: " + key);
-
-        const thai = unique[0];
-        translationCache[key] = {
-            thai,
-            source: result?.source?.url || "https://en.wiktionary.org/wiki/" + encodeURIComponent(key),
-            fetchedAt: Date.now()
-        };
-        try {
-            localStorage.setItem(translationCacheKey, JSON.stringify(translationCache));
-        } catch (error) {
-            console.warn("Could not cache dictionary translation.", error);
-        }
-        return thai;
-    } finally {
-        clearTimeout(timeout);
-    }
-}
-
-function updateWordTranslation(word) {
-    // The curated offline translation is the source of truth for gameplay.
-    // This intentionally does not call an external dictionary API, so the
-    // Thai prompt cannot flicker or change meaning while the player is looking.
-    if (word && currentWord === word) {
-        thaiWordEl.textContent = word.thai || "";
-    }
-}
-
-function getMasterVocabulary(){
-    // Use a curated, everyday vocabulary pool so obscure academic words do not appear.
-    return Object.keys(offlineTranslations).filter(word =>
-        easyVocabulary.has(word) || normalVocabulary.has(word) || hardVocabulary.has(word)
-    );
-}
-
-/* =========================================================
-   VOCABULARY LEVELS — everyday English for general Thai students.
-   Easy = very familiar words; Normal = common school/life words;
-   Hard = a little more challenging, but not university-level jargon.
-========================================================= */
-const easyVocabulary = new Set((`
-apple bad bag banana beach bear because bed big bird black blue boat book bottle boy bread brother bus buy cake car cat chair chicken city class clean clock close cloud come cow cup dance day deer desk doctor dog door drink duck ear eat egg evening eye family farmer father fish flower food foot friend frog get girl give go goat good goodbye grape grass green hair hand happy head hello help here home horse hot house jump keep laugh lemon like lion listen live long look love make mango market meat melon milk monkey moon morning mouth need new night nose old one open orange panda park pay pen phone pig plate play please police put rabbit rain read rice river road room run school see sell shark sheep shirt shoes short sing sister sit sleep small smile snake snow soup speak spoon star start stop student study sun swim take tall teacher thank there tiger today tomorrow tree under wake walk wash water whale white wind window without work write yellow young
-`).trim().split(/\s+/));
-
-const normalVocabulary = new Set((`
-about above across after again against almost along already also always another answer around arrive ask aunt baby beautiful before begin believe between body bottle breakfast bring busy call carry change check child choose city class clean clear clever clothes coffee computer country dance decide different difficult dinner early easy enough every everyone everything example explain face fall famous fast feel finish forget free fresh full game garden history kitchen language learn leave letter library listen little live local lucky many map message minute money move much music name near never next nice often once outside parent party people place poor popular possible practice present price problem question quick quiet quite ready really reason remember reply right same school science second show sick simple since sing sister small sometimes speak stay strong sure swim talk team thing think thirsty together town travel tree try turn understand until visit wait wake warm watch weather week welcome well west white whole window winter woman world year yellow
-`).trim().split(/\s+/));
-
-const hardVocabulary = new Set((`
-advice agree allow appear article attention avoid basic become borrow careful cause celebrate certain chance character common compare complete condition continue control describe design discover discuss effect effort energy enjoy especially event expect fact fair foreign form future habit happen health important improve include increase information interest introduce invent invite island issue journey knowledge manage material measure memory mention modern nature necessary notice opinion ordinary organize patient perform prepare prevent protect provide public receive reduce report result return serious several similar social special suggest supply support though thought trouble useful usual village waste worry
-`).trim().split(/\s+/));
-
-function getVocabularyLevel(word){
-    if(easyVocabulary.has(word)) return "easy";
-    if(hardVocabulary.has(word)) return "hard";
-    return "normal";
-}
-
-/* =========================================================
-   DIFFICULTY
-========================================================= */
+const customDictionary = {
+    easy: rawVocab.easy.split('|').map(s => { const p = s.split(':'); return { english: p[0], thai: p[1] }; }),
+    normal: rawVocab.normal.split('|').map(s => { const p = s.split(':'); return { english: p[0], thai: p[1] }; }),
+    hard: rawVocab.hard.split('|').map(s => { const p = s.split(':'); return { english: p[0], thai: p[1] }; })
+};
 
 const modes={
-
-easy:{
-    min:2,
-    max:4,
-    fake:3,
-    bugs:2,
-    bugSpeed:22,
-    multiplier:1
-},
-
-normal:{
-    min:5,
-    max:7,
-    fake:5,
-    bugs:4,
-    bugSpeed:31,
-    multiplier:1.5
-},
-
-hard:{
-    min:8,
-    max:99,
-    fake:7,
-    bugs:5,
-    bugSpeed:42,
-    multiplier:2
-}
-
+    easy:{ min:2, max:4, fake:3, bugs:2, bugSpeed:22, multiplier:1 },
+    normal:{ min:5, max:7, fake:5, bugs:4, bugSpeed:31, multiplier:1.5 },
+    hard:{ min:8, max:99, fake:7, bugs:5, bugSpeed:42, multiplier:2 }
 };
 
 let mode="easy";
@@ -3204,6 +1782,7 @@ let wordsCompleted=0;
 
 let currentWord=null;
 let index=0;
+let wordRequestId=0;
 
 let letters=[];
 let bugs=[];
@@ -3227,43 +1806,24 @@ const history={
     hard:[]
 };
 
-function chooseWord(){
-
-    const config=modes[mode];
-
-    // Difficulty now selects curated vocabulary bands, not word length.
-    const pool = getMasterVocabulary().filter(word =>
-        getVocabularyLevel(word) === mode
+async function chooseWord(){
+    const pool = customDictionary[mode];
+    let available = pool.filter(
+        word => !history[mode].includes(word.english)
     );
 
-    let available=
-        pool.filter(
-            word=>
-                !history[mode].includes(word)
-        );
-
-    if(available.length===0){
-
-        history[mode]=[];
-
-        available=[...pool];
-
+    if(available.length === 0){
+        history[mode] = [];
+        available = pool;
     }
 
-    const english=
-        available[
-            Math.floor(
-                Math.random()*available.length
-            )
-        ];
+    const selected = available[Math.floor(Math.random() * available.length)];
+    history[mode].push(selected.english);
 
-    history[mode].push(english);
-
-    return{
-        thai:offlineTranslations[english],
-        english:english.toUpperCase()
+    return {
+        thai: selected.thai,
+        english: selected.english.toUpperCase()
     };
-
 }
 
 /* =========================================================
@@ -4603,41 +3163,55 @@ function randomPosition(distance=70){
    NEW WORD
 ========================================================= */
 
-function newWord(){
-
-    roundLocked=false;
-
+async function newWord(){
+    const requestId=++wordRequestId;
+    roundLocked=true;
     letters=[];
-
-    currentWord=chooseWord();
-
     index=0;
-
-    thaiWordEl.textContent=
-        currentWord.thai;
-
-    messageEl.textContent=
-        "Find the first letter";
-
-    // Use the saved Thai meaning only. Do not replace it asynchronously
-    // with a dictionary API result, which may show a different sense later.
-    updateWordTranslation(currentWord);
-
+    currentWord=null;
+    thaiWordEl.textContent="กำลังโหลดคำศัพท์...";
+    messageEl.classList.remove("apiError");
+    messageEl.textContent="";
+    retryWordBtn.classList.add("hidden");
     updateAnswer();
 
-    makeLetters();
+    try{
+        const word=await chooseWord();
+        if(requestId!==wordRequestId||!running)return;
 
-    if(Math.random()<.28){
-        makePower();
+        currentWord=word;
+        thaiWordEl.textContent=word.thai;
+        messageEl.textContent="Find the first letter";
+        retryWordBtn.classList.add("hidden");
+        roundLocked=false;
+        updateAnswer();
+        makeLetters();
+
+        if(Math.random()<.28){
+            makePower();
+        }
+    }catch(error){
+        if(requestId!==wordRequestId||!running)return;
+        messageEl.classList.add("apiError");
+        messageEl.textContent="โหลดคำศัพท์ไม่สำเร็จ";
+        thaiWordEl.textContent="เกิดข้อผิดพลาด";
+        retryWordBtn.classList.remove("hidden");
+        console.error("Vocabulary error:",error);
     }
-
 }
+
+retryWordBtn.onclick=()=>newWord();
 
 /* =========================================================
    ANSWER
 ========================================================= */
 
 function updateAnswer(){
+    if(!currentWord){
+        answerEl.textContent="";
+        progressFill.style.width="0";
+        return;
+    }
 
     answerEl.textContent=
         currentWord.english
@@ -7326,7 +5900,8 @@ function update(dt){
 
     if(
         !running||
-        paused
+        paused||
+        (roundLocked&&!currentWord)
     ){
         return;
     }
